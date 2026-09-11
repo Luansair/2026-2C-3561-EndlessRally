@@ -22,7 +22,10 @@ public class TGCGame : Game
     private readonly GraphicsDeviceManager _graphics;
 
     private Effect _effect;
+
     private Model _model;
+    private Model _treeModel;
+
     private Matrix _projection;
     private float _rotation;
     private SpriteBatch _spriteBatch;
@@ -32,6 +35,9 @@ public class TGCGame : Game
 
     private Random _random;
     private const int SEED = 0;
+
+    private Tree _tree;
+    private Forest _forest;
 
     /// <summary>
     ///     Constructor del juego.
@@ -88,6 +94,7 @@ public class TGCGame : Game
 
         // Cargo el modelo del logo.
         _model = Content.Load<Model>(ContentFolder3D + "raceCarWhite");
+        _treeModel = Content.Load<Model>(ContentFolder3D + "Tree/Tree");
 
         // Cargo un efecto basico propio declarado en el Content pipeline.
         // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
@@ -103,6 +110,9 @@ public class TGCGame : Game
                 meshPart.Effect = _effect;
             }
         }
+
+        _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
+        _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, new Random(SEED));
 
         base.LoadContent();
     }
@@ -177,7 +187,8 @@ public class TGCGame : Game
             _world =  Matrix.CreateTranslation(nM);
             DrawModel(_model, _world, _random);
         }
-        
+        _tree.Draw(GraphicsDevice, _effect, _view, _projection);
+        _forest.Draw(GraphicsDevice, _effect, _view, _projection);
     }
 
     private void DrawModel(Model model, Matrix world, Random random)
