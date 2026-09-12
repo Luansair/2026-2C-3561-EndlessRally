@@ -23,11 +23,24 @@ public class TGCGame : Game
 
     private Effect _effect;
     private Model _model;
+    private Model _carModel;
+    private Model _treeModel;
+
+    // Una camara
+    private FollowCamera _followCamera;
+    // Posicion del auto a seguir
+    private Vector3 _carPosition = new(0f,0f,0f);
+    //Rotacion del auto
+    private float carYaw = 0f;
+    private float velocidad = 400f;
+
+
     private Matrix _projection;
     private float _rotation;
     private SpriteBatch _spriteBatch;
     private Matrix _view;
     private Matrix _world;
+    private Matrix _carWorld;
     private Vector3 cameraPos = new(-100f, 200f, -200f);
 
     private Random _random;
@@ -69,10 +82,13 @@ public class TGCGame : Game
 
         // Configuramos nuestras matrices de la escena.
         _world = Matrix.Identity;
-        _view = Matrix.CreateLookAt(cameraPos, Vector3.Zero, Vector3.Up);
-        _projection =
+        //_view = Matrix.CreateLookAt(cameraPos, Vector3.Zero, Vector3.Up);
+        //_projection =
             Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 1500);
-
+        
+        //creo una camara para seguir a un auto
+        _followCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
+        _carWorld = Matrix.Identity;
         base.Initialize();
     }
 
@@ -88,7 +104,8 @@ public class TGCGame : Game
 
         // Cargo el modelo del logo.
         _model = Content.Load<Model>(ContentFolder3D + "raceCarWhite");
-
+        _treeModel = Content.Load<Model>(ContentFolder3D + "Tree/Tree");
+        _carModel = Content.Load<Model>(ContentFolder3D + "raceCarWhite");
         // Cargo un efecto basico propio declarado en el Content pipeline.
         // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
@@ -103,6 +120,17 @@ public class TGCGame : Game
                 meshPart.Effect = _effect;
             }
         }
+        foreach (var mesh in _carModel.Meshes)
+        {
+            // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                meshPart.Effect = _effect;
+            }
+        }
+
+        _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
+        _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, new Random(SEED));
 
         base.LoadContent();
     }
@@ -115,16 +143,53 @@ public class TGCGame : Game
     protected override void Update(GameTime gameTime)
     {
         // Aca deberiamos poner toda la logica de actualizacion del juego.
-
+        float elapsedTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
+        // Capturo el estado del teclado.
+        var keyboardState = Keyboard.GetState();
+        
         // Capturar Input teclado
-        if (Keyboard.GetState().IsKeyDown(Keys.Escape))
+        if (keyboardState.IsKeyDown(Keys.Escape))
         {
             //Salgo del juego.
             Exit();
         }
 
+        //La logica debe ir aca
+        if (keyboardState.IsKeyDown(Keys.A))
+        {
+            // Roto el auto hacia la izquierda
+            carYaw += MathHelper.ToRadians(100f) * elapsedTime;
+        }
+        if (keyboardState.IsKeyDown(Keys.D))
+        {
+            // Roto el auto hacia la derecha
+            carYaw -= MathHelper.ToRadians(100f) * elapsedTime;
+        }
+
+        //obtengo la direccion del auto
+        Vector3 direccion = _carWorld.Forward;
+
+        if (keyboardState.IsKeyDown(Keys.W))
+        {
+            // Muevo el auto hacia adelante
+            _carPosition += direccion * velocidad * elapsedTime;
+        }
+        if (keyboardState.IsKeyDown(Keys.S))
+        {
+            // Muevo el auto hacia atras
+            _carPosition -= direccion * velocidad * elapsedTime;
+        }
+
         // Basado en el tiempo que paso se va generando una rotacion.
         //_rotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+
+
+        //Actualizo la matriz de mundo del auto con la rotacion respecto al eje Y 
+        // y con el vector3 de posicion, siguiendo la regla de SRT
+        _carWorld = Matrix.CreateRotationY(carYaw) * Matrix.CreateTranslation(_carPosition);
+
+        // Actualizo la camara, enviandole la matriz de mundo del auto.
+        _followCamera.Update(gameTime, _carWorld);
 
         _world = Matrix.CreateRotationY(_rotation);
 
@@ -141,8 +206,8 @@ public class TGCGame : Game
         GraphicsDevice.Clear(Color.Black);
 
         // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
-        _effect.Parameters["View"].SetValue(_view);
-        _effect.Parameters["Projection"].SetValue(_projection);
+        _effect.Parameters["View"].SetValue(_followCamera.View);
+        _effect.Parameters["Projection"].SetValue(_followCamera.Projection);
         _random = new Random(SEED);
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         for(int i=1; i<=100; i++)
@@ -177,7 +242,26 @@ public class TGCGame : Game
             _world =  Matrix.CreateTranslation(nM);
             DrawModel(_model, _world, _random);
         }
-        
+
+        _tree.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
+        _forest.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
+
+        //Dibujo el auto a seguir
+        foreach (var mesh in _carModel.Meshes)
+        {
+            _effect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
+            foreach (var part in mesh.MeshParts)
+            {
+                // Pasamos las matrices al efecto de esta parte específica
+                part.Effect.Parameters["World"]?.SetValue(mesh.ParentBone.Transform * _carWorld);
+                part.Effect.Parameters["View"]?.SetValue(_followCamera.View);
+                part.Effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
+            }
+
+            mesh.Draw();
+        }
+    
+    
     }
 
     private void DrawModel(Model model, Matrix world, Random random)
