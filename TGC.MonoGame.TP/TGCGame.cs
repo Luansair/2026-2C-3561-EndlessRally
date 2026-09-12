@@ -132,8 +132,8 @@ public class TGCGame : Game
             }
         }
 
-        //_tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
-        //_forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, new Random(SEED));
+        _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
+        _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, new Random(SEED));
 
         base.LoadContent();
     }
