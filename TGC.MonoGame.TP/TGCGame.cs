@@ -35,10 +35,9 @@ public class TGCGame : Game
     private float velocidad = 400f;
 
 
-    private Matrix _projection;
-    private float _rotation;
+    //private Matrix _projection;
     private SpriteBatch _spriteBatch;
-    private Matrix _view;
+    //private Matrix _view;
     private Matrix _world;
     private Matrix _carWorld;
     private Vector3 cameraPos = new(-100f, 200f, -200f);
@@ -129,8 +128,8 @@ public class TGCGame : Game
             }
         }
 
-        _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
-        _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, new Random(SEED));
+        //_tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
+        //_forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, new Random(SEED));
 
         base.LoadContent();
     }
@@ -180,19 +179,13 @@ public class TGCGame : Game
             _carPosition -= direccion * velocidad * elapsedTime;
         }
 
-        // Basado en el tiempo que paso se va generando una rotacion.
-        //_rotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-
-
         //Actualizo la matriz de mundo del auto con la rotacion respecto al eje Y 
         // y con el vector3 de posicion, siguiendo la regla de SRT
         _carWorld = Matrix.CreateRotationY(carYaw) * Matrix.CreateTranslation(_carPosition);
 
         // Actualizo la camara, enviandole la matriz de mundo del auto.
         _followCamera.Update(gameTime, _carWorld);
-
-        _world = Matrix.CreateRotationY(_rotation);
-
+        
         base.Update(gameTime);
     }
 
