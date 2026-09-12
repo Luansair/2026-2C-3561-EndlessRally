@@ -22,6 +22,7 @@ public class TGCGame : Game
     private readonly GraphicsDeviceManager _graphics;
 
     private Effect _effect;
+
     private Model _model;
     private Model _carModel;
     private Model _treeModel;
@@ -44,6 +45,9 @@ public class TGCGame : Game
 
     private Random _random;
     private const int SEED = 0;
+
+    private Tree _tree;
+    private Forest _forest;
 
     /// <summary>
     ///     Constructor del juego.
