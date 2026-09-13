@@ -28,6 +28,7 @@ public class TGCGame : Game
     private Model _carModel;
     private Model _treeModel;
     private DecorationArea _area;
+    private DecorationArea _farArea;
     private DecorationGroup _treesGroup;
     private DecorationGroup _rocksGroup;
 
@@ -154,9 +155,10 @@ public class TGCGame : Game
         _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
         _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, _random);
 
-        _treesGroup = new DecorationGroup(DecorationType.Tree, 150, [new ModelInfo(_treeModel, 6)]);
-        _rocksGroup = new DecorationGroup(DecorationType.Rock, 50, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
+        _treesGroup = new DecorationGroup(DecorationType.Tree, 350, [new ModelInfo(_treeModel, 6)]);
+        _rocksGroup = new DecorationGroup(DecorationType.Rock, 100, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
         _area = new DecorationArea(new RectangleShape(new Vector3(200, 0, 0), 300, 250), [_treesGroup, _rocksGroup], _random);
+        _farArea = new DecorationArea(new RectangleShape(new Vector3(0, 0, 1600), 800, 500), [_treesGroup, _rocksGroup], _random);
 
         //se cargan los modelos
         var roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraight");
@@ -292,9 +294,10 @@ public class TGCGame : Game
 
         _tree.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
         _forest.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
-        _area.Draw(GraphicsDevice, _effect, _view, _projection);
+        _area.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
+        _farArea.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
+        _effect.Parameters["DiffuseColor"].SetValue(Color.SandyBrown.ToVector3());
         _roadSpawner.Draw(_effect, _followCamera.View, _followCamera.Projection);
-
 
         //Dibujo el auto a seguir
         foreach (var mesh in _carModel.Meshes)
