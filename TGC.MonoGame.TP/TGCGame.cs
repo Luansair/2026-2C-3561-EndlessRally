@@ -1,7 +1,8 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.Collections.Generic;
 
 namespace TGC.MonoGame.TP;
 
@@ -95,6 +96,8 @@ public class TGCGame : Game
         base.Initialize();
     }
 
+    RoadSpawner _roadSpawner;
+
     /// <summary>
     ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
     ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
@@ -108,7 +111,8 @@ public class TGCGame : Game
         // Cargo el modelo del logo.
         _model = Content.Load<Model>(ContentFolder3D + "raceCarWhite");
         _treeModel = Content.Load<Model>(ContentFolder3D + "Tree/Tree");
-        _carModel = Content.Load<Model>(ContentFolder3D + "raceCarWhite");
+        _carModel = Content.Load<Model>(ContentFolder3D + "raceCarWhite"); 
+
         // Cargo un efecto basico propio declarado en el Content pipeline.
         // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
@@ -134,6 +138,32 @@ public class TGCGame : Game
 
         _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
         _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, new Random(SEED));
+
+        //se cargan los modelos
+        var roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraight");
+        var roadRampModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadRamp");
+        var roadCurvedSplitModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCurvedSplit");
+
+        foreach (var model in new[] { roadStraightModel, roadRampModel, roadCurvedSplitModel })
+        {
+            foreach (var mesh in model.Meshes)
+            {
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = _effect;
+                }
+            }
+        }
+        //se define un dicc con Tipo de camino  y los modelo con sus datos (offset para la siguiente posisicion y si rota o no)
+        var roadDefs = new Dictionary<RoadPieceType, RoadPiece>
+        {
+            { RoadPieceType.STRAIGHT, new RoadPiece(roadStraightModel, new Vector3(0, 0, 10), 0f) },
+            { RoadPieceType.RAMP, new RoadPiece(roadRampModel, new Vector3(0, 0, 10), 0f) },
+            { RoadPieceType.CURVEDSPLIT, new RoadPiece(roadCurvedSplitModel, new Vector3(0, 0, 20), -MathHelper.PiOver2) },
+            { RoadPieceType.CURVEDSPLITLEFT, new RoadPiece(roadCurvedSplitModel, new Vector3(0, 0, 20), MathHelper.PiOver2) }
+        };
+        //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
+        _roadSpawner = new RoadSpawner(roadDefs, Vector3.Zero, 100f, 100f);
 
         base.LoadContent();
     }
@@ -189,7 +219,8 @@ public class TGCGame : Game
 
         // Actualizo la camara, enviandole la matriz de mundo del auto.
         _followCamera.Update(gameTime, _carWorld);
-        
+        _roadSpawner.Update(_carPosition);
+
         base.Update(gameTime);
     }
 
@@ -242,6 +273,10 @@ public class TGCGame : Game
 
         _tree.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
         _forest.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
+
+
+        _roadSpawner.Draw(_effect, _followCamera.View, _followCamera.Projection);
+
 
         //Dibujo el auto a seguir
         foreach (var mesh in _carModel.Meshes)
