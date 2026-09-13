@@ -20,6 +20,7 @@
 /build:Effects/BasicShader.fx
 
 #begin Models/Kenny_races/rail.fbx
+#begin Models/Pista/Track_Striped_Straight_Double.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
 /processorParam:ColorKeyColor=0,0,0,0
@@ -1213,6 +1214,7 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Models/Kenny_races/treeSmall.fbx
+/build:Models/Pista/Track_Striped_Straight_Double.fbx
 
 #begin Models/raceCarWhite.fbx
 /importer:FbxImporter
