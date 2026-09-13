@@ -27,6 +27,9 @@ public class TGCGame : Game
     private Model _model;
     private Model _carModel;
     private Model _treeModel;
+    private DecorationArea _area;
+    private DecorationGroup _treesGroup;
+    private DecorationGroup _rocksGroup;
 
     // Una camara
     private FollowCamera _followCamera;
@@ -112,6 +115,17 @@ public class TGCGame : Game
         _model = Content.Load<Model>(ContentFolder3D + "raceCarWhite");
         _treeModel = Content.Load<Model>(ContentFolder3D + "Tree/Tree");
         _carModel = Content.Load<Model>(ContentFolder3D + "raceCarWhite"); 
+        var rockModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock0"), 0.01f);
+        var rockModel1 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock1"), 0.01f);
+        var rockModel2 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock2"), 0.01f);
+        var rockModel3 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock3"), 0.01f);
+        var rockModel4 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock4"), 0.01f);
+        var rockModel5 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock5"), 0.01f);
+        var rockModel6 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock6"), 0.01f);
+        var rockModel7 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock7"), 0.01f);
+        var rockModel8 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock8"), 0.01f);
+        var rockModel9 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock9"), 0.01f);
+        var rockModel10 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock10"), 0.01f);
 
         // Cargo un efecto basico propio declarado en el Content pipeline.
         // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
@@ -136,8 +150,13 @@ public class TGCGame : Game
             }
         }
 
+        _random = new Random(SEED);
         _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
-        _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, new Random(SEED));
+        _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, _random);
+
+        _treesGroup = new DecorationGroup(DecorationType.Tree, 150, [new ModelInfo(_treeModel, 6)]);
+        _rocksGroup = new DecorationGroup(DecorationType.Rock, 50, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
+        _area = new DecorationArea(new RectangleShape(new Vector3(200, 0, 0), 300, 250), [_treesGroup, _rocksGroup], _random);
 
         //se cargan los modelos
         var roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraight");
@@ -236,7 +255,7 @@ public class TGCGame : Game
         // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
         _effect.Parameters["View"].SetValue(_followCamera.View);
         _effect.Parameters["Projection"].SetValue(_followCamera.Projection);
-        _random = new Random(SEED);
+        
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         for(int i=1; i<=100; i++)
         {
@@ -273,8 +292,7 @@ public class TGCGame : Game
 
         _tree.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
         _forest.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
-
-
+        _area.Draw(GraphicsDevice, _effect, _view, _projection);
         _roadSpawner.Draw(_effect, _followCamera.View, _followCamera.Projection);
 
 
@@ -292,8 +310,6 @@ public class TGCGame : Game
 
             mesh.Draw();
         }
-    
-    
     }
 
     private void DrawModel(Model model, Matrix world, Random random)

@@ -1,23 +1,31 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace TGC.MonoGame.TP
 {
-
+    public enum DecorationType
+    {
+        Tree,
+        Rock,
+        Bush,
+        Flower
+    }
     /// <summary>
     ///     Esta clase es la que se encarga de manejar el arbol.
     /// </summary>
-    public class Tree
+    public class Decoration
     {
-        private Model _model;
+        private ModelInfo _model;
+        private DecorationType _type;
 
         private Vector3 position;
         private float rotation;
         public float scale;
 
-        public Tree(Model model, Vector3 position, float rotation, float scale)
+        public Decoration(ModelInfo model, DecorationType type, Vector3 position, float rotation, float scale)
         {
             this._model = model;
+            this._type = type;
             this.position = position;
             this.rotation = rotation;
             this.scale = scale;
@@ -25,13 +33,11 @@ namespace TGC.MonoGame.TP
 
         public void Draw(GraphicsDevice graphicsDevice, Effect effect, Matrix view, Matrix projection)
         {
-            // Crear la matriz de mundo para el árbol
-            Matrix world = Matrix.CreateScale(scale) *
+            Matrix world = Matrix.CreateScale(scale * _model.Scale) *
                            Matrix.CreateRotationY(rotation) *
                            Matrix.CreateTranslation(position);
 
-            // Dibujar el modelo del árbol con la matriz de mundo, vista y proyección
-            foreach (ModelMesh mesh in _model.Meshes)
+            foreach (ModelMesh mesh in _model.Model.Meshes)
             {
                 foreach (ModelMeshPart part in mesh.MeshParts)
                 {
@@ -39,10 +45,18 @@ namespace TGC.MonoGame.TP
                     effect.Parameters["World"].SetValue(world);
                     effect.Parameters["View"].SetValue(view);
                     effect.Parameters["Projection"].SetValue(projection);
-                    effect.Parameters["DiffuseColor"].SetValue(Color.DarkGreen.ToVector3());
+                    if (_type == DecorationType.Tree)
+                    {
+                        effect.Parameters["DiffuseColor"].SetValue(Color.DarkGreen.ToVector3());
+                    }
+                    else if(_type == DecorationType.Rock)
+                    {
+                        effect.Parameters["DiffuseColor"].SetValue(Color.Gray.ToVector3());
+                    }
                 }
                 mesh.Draw();
             }
         }
     }
 }
+
