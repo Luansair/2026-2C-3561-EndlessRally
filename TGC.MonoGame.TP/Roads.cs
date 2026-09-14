@@ -51,6 +51,7 @@ namespace TGC.MonoGame.TP
                 effect.Parameters["World"].SetValue(boneTransforms[mesh.ParentBone.Index] * World);
                 effect.Parameters["View"].SetValue(view);
                 effect.Parameters["Projection"].SetValue(projection);
+                effect.Parameters["DiffuseColor"].SetValue(Color.SandyBrown.ToVector3());
 
                 mesh.Draw();
             }

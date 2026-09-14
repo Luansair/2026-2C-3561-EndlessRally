@@ -6,14 +6,16 @@ using System.Runtime;
 
 namespace TGC.MonoGame.TP
 {
-    public class RoadSpawner
+    internal class RoadSpawner
     {
         //largo de las piezas
         private const float TileLength = 10f;
 
         private readonly Dictionary<RoadPieceType, RoadPiece> defs;
-        private readonly Queue<RoadSegment> colaSegmentos;
+        private readonly Queue<RoadChunk> colaSegmentos;
         private readonly Random random;
+        // generador de decoraciones del camino
+        private readonly DecorationAreaFactory _decorationFactory;
         //distancia a la que spawnea camino
         private readonly float spawnDistance;
         //cantidad maxima para despawn
@@ -27,12 +29,16 @@ namespace TGC.MonoGame.TP
         private RoadPieceType lastType;
         //racha para sacar los repetidos
         private int sameRoadRacha;
+        private int _chunksGenerados;
+        
 
-        public RoadSpawner(Dictionary<RoadPieceType, RoadPiece> defs, Vector3 startPos,float spawnDistance, float despawnDistance)
+        public RoadSpawner(Dictionary<RoadPieceType, RoadPiece> defs, Vector3 startPos,float spawnDistance, float despawnDistance, DecorationAreaFactory decorationFactory)
         {
             this.defs = defs;
-            colaSegmentos = new Queue<RoadSegment>();
+            colaSegmentos = new Queue<RoadChunk>();
             random = new Random();
+            _decorationFactory = decorationFactory;
+            _chunksGenerados = 0;
 
             this.spawnDistance = spawnDistance;
             maxRoads = (int)((spawnDistance + despawnDistance) / TileLength) + 30;
@@ -57,10 +63,10 @@ namespace TGC.MonoGame.TP
             }
 
             //culling/despawn
-            //while (colaSegmentos.Count > maxRoads)
-            //{
-            //    colaSegmentos.Dequeue();
-            //}
+            while (colaSegmentos.Count > maxRoads)
+            {
+                colaSegmentos.Dequeue();
+            }
         }
 
         public void Draw(Effect effect, Matrix view, Matrix projection)
@@ -79,7 +85,13 @@ namespace TGC.MonoGame.TP
             RoadPiece def = defs[typeNow];
 
             Matrix world = Matrix.CreateRotationY(nextRot) * Matrix.CreateTranslation(nextPos);
-            colaSegmentos.Enqueue(new RoadSegment(def.model, world));
+
+            var roadSegment = new RoadSegment(def.model, world);
+            var decorations = _decorationFactory.CreateFor(def, _chunksGenerados);
+            var chunk = new RoadChunk(_chunksGenerados, world, roadSegment, decorations);
+
+            colaSegmentos.Enqueue(chunk);
+            _chunksGenerados++;
 
             Vector3 offset = Vector3.Transform(def.offsetLocal, Matrix.CreateRotationY(nextRot));
             nextPos += offset;
@@ -89,6 +101,12 @@ namespace TGC.MonoGame.TP
             lastType = typeNow;
             if (!curving) sameRoadRacha = typeNow == lastType ? sameRoadRacha + 1 : 1;
 
+        }
+
+        public RoadChunk GetCurrentSegment()
+        {
+            if (colaSegmentos.Count == 0) return null;
+            return colaSegmentos.Peek();
         }
         bool curving  = false;
         int curvingCount  = 2;

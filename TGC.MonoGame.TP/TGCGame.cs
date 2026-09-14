@@ -23,7 +23,6 @@ public class TGCGame : Game
     private readonly GraphicsDeviceManager _graphics;
 
     private Effect _effect;
-
     private Model _model;
     private Model _carModel;
     private Model _treeModel;
@@ -155,8 +154,9 @@ public class TGCGame : Game
         _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
         _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, _random);
 
-        _treesGroup = new DecorationGroup(DecorationType.Tree, 350, [new ModelInfo(_treeModel, 6)]);
-        _rocksGroup = new DecorationGroup(DecorationType.Rock, 100, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
+        _treesGroup = new DecorationGroup(DecorationType.Tree, 3, [new ModelInfo(_treeModel, 6)]);
+        _rocksGroup = new DecorationGroup(DecorationType.Rock, 1, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
+
         _area = new DecorationArea(new RectangleShape(new Vector3(200, 0, 0), 300, 250), [_treesGroup, _rocksGroup], _random);
         _farArea = new DecorationArea(new RectangleShape(new Vector3(0, 0, 1600), 800, 500), [_treesGroup, _rocksGroup], _random);
 
@@ -183,8 +183,12 @@ public class TGCGame : Game
             { RoadPieceType.CURVEDSPLIT, new RoadPiece(roadCurvedSplitModel, new Vector3(0, 0, 20), -MathHelper.PiOver2) },
             { RoadPieceType.CURVEDSPLITLEFT, new RoadPiece(roadCurvedSplitModel, new Vector3(0, 0, 20), MathHelper.PiOver2) }
         };
+
+        var decorationsFactory = new DecorationAreaFactory([_treesGroup, _rocksGroup]);
+
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
-        _roadSpawner = new RoadSpawner(roadDefs, Vector3.Zero, 100f, 100f);
+        _roadSpawner = new RoadSpawner(roadDefs, Vector3.Zero, 1000f, 1000f, decorationsFactory);
+        
 
         base.LoadContent();
     }
@@ -291,12 +295,13 @@ public class TGCGame : Game
             _world =  Matrix.CreateTranslation(nM);
             DrawModel(_model, _world, _random);
         }
-
+ 
+        /*
         _tree.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
         _forest.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
         _area.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
         _farArea.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
-        _effect.Parameters["DiffuseColor"].SetValue(Color.SandyBrown.ToVector3());
+        */
         _roadSpawner.Draw(_effect, _followCamera.View, _followCamera.Projection);
 
         //Dibujo el auto a seguir

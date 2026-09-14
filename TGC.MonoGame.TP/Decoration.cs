@@ -57,6 +57,33 @@ namespace TGC.MonoGame.TP
                 mesh.Draw();
             }
         }
+
+        public void DrawRelativeTo(Matrix parentWorld, Effect effect, Matrix view, Matrix projection)
+        {
+            Matrix world = Matrix.CreateScale(scale * _model.Scale) *
+                           Matrix.CreateRotationY(rotation) *
+                           Matrix.CreateTranslation(position) *
+                           parentWorld;
+            foreach (ModelMesh mesh in _model.Model.Meshes)
+            {
+                foreach (ModelMeshPart part in mesh.MeshParts)
+                {
+                    part.Effect = effect;
+                    effect.Parameters["World"].SetValue(world);
+                    effect.Parameters["View"].SetValue(view);
+                    effect.Parameters["Projection"].SetValue(projection);
+                    if (_type == DecorationType.Tree)
+                    {
+                        effect.Parameters["DiffuseColor"].SetValue(Color.DarkGreen.ToVector3());
+                    }
+                    else if (_type == DecorationType.Rock)
+                    {
+                        effect.Parameters["DiffuseColor"].SetValue(Color.Gray.ToVector3());
+                    }
+                }
+                mesh.Draw();
+            }
+        }
     }
 }
 

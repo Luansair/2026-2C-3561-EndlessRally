@@ -46,5 +46,13 @@ namespace TGC.MonoGame.TP
                 decoration.Draw(graphicsDevice, effect, view, projection);
             }
         }
+
+        public void DrawRelativeTo(Matrix parentWorld, Effect effect, Matrix view, Matrix projection)
+        {
+            foreach (Decoration decoration in _decorations)
+            {
+                decoration.DrawRelativeTo(parentWorld, effect, view, projection);
+            }
+        }
     }
 }
