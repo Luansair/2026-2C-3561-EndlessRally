@@ -9,7 +9,7 @@ namespace TGC.MonoGame.TP
     public class RoadSpawner
     {
         //largo de las piezas
-        private const float TileLength = 10f;
+        private const float TileLength = 100f;
 
         private readonly Dictionary<RoadPieceType, RoadPiece> defs;
         private readonly Queue<RoadSegment> colaSegmentos;
@@ -118,6 +118,10 @@ namespace TGC.MonoGame.TP
                 RoadPieceType.RAMP,
                 RoadPieceType.CURVEDSPLIT,
                 RoadPieceType.CURVEDSPLITLEFT,
+                RoadPieceType.CURVEDSPLIT,
+                RoadPieceType.CORNERLARGE,
+                RoadPieceType.CORNERLARGE,
+                RoadPieceType.CORNERLARGE
             ];
 
             return pool[random.Next(pool.Length)];

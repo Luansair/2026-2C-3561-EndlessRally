@@ -8,7 +8,8 @@ namespace TGC.MonoGame.TP
         STRAIGHT,
         RAMP,
         CURVEDSPLIT,
-        CURVEDSPLITLEFT
+        CURVEDSPLITLEFT,
+        CORNERLARGE
     }
 
     public struct RoadPiece
@@ -47,6 +48,7 @@ namespace TGC.MonoGame.TP
                 {
                     part.Effect = effect;
                 }
+                World = Matrix.CreateScale(2f,0,2f);
 
                 effect.Parameters["World"].SetValue(boneTransforms[mesh.ParentBone.Index] * World);
                 effect.Parameters["View"].SetValue(view);
