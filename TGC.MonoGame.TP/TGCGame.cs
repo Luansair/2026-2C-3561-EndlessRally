@@ -47,11 +47,8 @@ public class TGCGame : Game
     private Model roadCornerLargeModel ;
     private Matrix[] roadCornerBones;
 
-    //Ultima posicion del camino
+    //Origen del camino
     private Vector3 origin = new(0f,0.1f,0f);
-    //Matriz de mundo de la pieza de camino actual
-    private Matrix currentRoadPiece;
-
 
     // Entidades del escenario
     private struct TrackPieceInstance
@@ -74,14 +71,15 @@ public class TGCGame : Game
     private Vector3 _carPosition = new(0f,0f,0f);
     //Rotacion del auto
     private float carYaw = 0f;
-    private float velocidad = 400f;
+    private float velocidad = 500f;
 
 
     //private Matrix _projection;
     private SpriteBatch _spriteBatch;
     //private Matrix _view;
-    private Matrix _world;
     private Matrix _carWorld;
+    //escala del auto para que sea acorde al camino
+    //private const float CarScale = 0.07f;
     //private Vector3 cameraPos = new(-100f, 200f, -200f);
 
     private Random _random;
@@ -125,12 +123,10 @@ public class TGCGame : Game
         // Seria hasta aca.
 
         // Configuramos nuestras matrices de la escena.
-        _world = Matrix.Identity;
         //_view = Matrix.CreateLookAt(cameraPos, Vector3.Zero, Vector3.Up);
         //_projection =
         //    Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 1500);
         _carWorld = Matrix.Identity;
-        currentRoadPiece = Matrix.Identity;
 
         //creo una camara para seguir a un auto
         _followCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
@@ -154,7 +150,6 @@ public class TGCGame : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
         // Cargo los modelos.
-        //_model = Content.Load<Model>(ContentFolder3D + "raceCarWhite");
         _treeModel = Content.Load<Model>(ContentFolder3D + "Tree/Tree");
         _carModel = Content.Load<Model>(ContentFolder3D + "raceCarWhite"); 
         var rockModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock0"), 0.01f);
@@ -194,17 +189,6 @@ public class TGCGame : Game
         {
             ApplyShaderToModel(model, _effect);
         }
-        //se define un dicc con Tipo de camino  y los modelo con sus datos (offset para la siguiente posisicion y si rota o no)
-        var roadDefs = new Dictionary<RoadPieceType, RoadPiece>
-        {
-            { RoadPieceType.STRAIGHT, new RoadPiece(roadStraightModel, new Vector3(0, 0, 10), 0f) },
-            { RoadPieceType.RAMP, new RoadPiece(roadRampModel, new Vector3(0, 0, 10), 0f) },
-            { RoadPieceType.CURVEDSPLIT, new RoadPiece(roadCurvedModel, new Vector3(0, 0, 20), -MathHelper.PiOver2) },
-            { RoadPieceType.CURVEDSPLITLEFT, new RoadPiece(roadCurvedModel, new Vector3(0, 0, 20), MathHelper.PiOver2) },
-            { RoadPieceType.CORNERLARGE, new RoadPiece(roadCornerLargeModel, new Vector3(0, 0, 20), MathHelper.PiOver2) }
-        };
-        //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
-        //_roadSpawner = new RoadSpawner(roadDefs, Vector3.Zero, 600f, 100f);
 
         roadStraightBones = new Matrix[roadStraightModel.Bones.Count];
         roadStraightModel.CopyAbsoluteBoneTransformsTo(roadStraightBones);
@@ -219,7 +203,7 @@ public class TGCGame : Game
         ApplyShaderToModel(roadCurvedModel, _effect);
 
         //Ubico el auto centrado en la recta del comienzo
-        _carPosition = new Vector3(-10f, 0f, 50f);
+        _carPosition = new Vector3(-10f, 0f, 100f);
         carYaw = MathHelper.Pi;
 
         //Armamos el circuito (las posiciones de cada parte)
@@ -227,7 +211,6 @@ public class TGCGame : Game
 
         base.LoadContent();
     }
-
 
     //esto es para no repetir codigo, aplica el efecto a cada parte de cada mesh
     private void ApplyShaderToModel(Model model, Effect effect)
@@ -248,49 +231,35 @@ public class TGCGame : Game
     /// </summary>
     protected override void Update(GameTime gameTime)
     {
-        // Aca deberiamos poner toda la logica de actualizacion del juego.
-        float elapsedTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
-        // Capturo el estado del teclado.
+        float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         var keyboardState = Keyboard.GetState();
-        
-        // Capturar Input teclado
+
         if (keyboardState.IsKeyDown(Keys.Escape))
-        {
-            //Salgo del juego.
             Exit();
-        }
+
+        // Giros
         if (keyboardState.IsKeyDown(Keys.A))
-        {
-            // Roto el auto hacia la izquierda
             carYaw += MathHelper.ToRadians(100f) * elapsedTime;
-        }
+
         if (keyboardState.IsKeyDown(Keys.D))
-        {
-            // Roto el auto hacia la derecha
             carYaw -= MathHelper.ToRadians(100f) * elapsedTime;
-        }
 
-        //obtengo la direccion del auto
-        Vector3 direccion = _carWorld.Forward;
+        // Dirección normal hacia adelante según el ángulo carYaw
+        Vector3 forward = _carWorld.Forward;
 
+        // W avanza hacia adelante , S retrocede
         if (keyboardState.IsKeyDown(Keys.W))
-        {
-            // Muevo el auto hacia adelante
-            _carPosition += direccion * velocidad * elapsedTime;
-        }
+            _carPosition += forward * velocidad * elapsedTime;
+
         if (keyboardState.IsKeyDown(Keys.S))
-        {
-            // Muevo el auto hacia atras
-            _carPosition -= direccion * velocidad * elapsedTime;
-        }
+            _carPosition -= forward * velocidad * elapsedTime;
 
-        //Actualizo la matriz de mundo del auto con la rotacion respecto al eje Y 
-        // y con el vector3 de posicion, siguiendo la regla de SRT
-        _carWorld = Matrix.CreateRotationY(carYaw) * Matrix.CreateTranslation(_carPosition);
+        // Matriz de mundo limpia sin rotaciones dobles que cancelen vectores
+        _carWorld = Matrix.CreateRotationY(carYaw) 
+                    * Matrix.CreateTranslation(_carPosition);
 
-        // Actualizo la camara, enviandole la matriz de mundo del auto.
+        // Actualizamos la cámara
         _followCamera.Update(gameTime, _carWorld);
-        //_roadSpawner.Update(_carPosition);
 
         base.Update(gameTime);
     }
@@ -302,7 +271,6 @@ public class TGCGame : Game
     protected override void Draw(GameTime gameTime)
     {
         // Aca deberiamos poner toda la logia de renderizado del juego.
-        GraphicsDevice.Clear(Color.Black);
         GraphicsDevice.Clear(new Color(110, 160, 230)); // Cielo azul
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
@@ -328,13 +296,11 @@ public class TGCGame : Game
         _forest.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
         _area.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
         _farArea.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
-        _effect.Parameters["DiffuseColor"].SetValue(Color.SandyBrown.ToVector3());
-        //_roadSpawner.Draw(_effect, _followCamera.View, _followCamera.Projection);
 
         //Dibujo el auto a seguir
         foreach (var mesh in _carModel.Meshes)
         {
-            _effect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
+            _effect.Parameters["DiffuseColor"].SetValue(Color.LightGray.ToVector3());
             foreach (var part in mesh.MeshParts)
             {
                 // Pasamos las matrices al efecto de esta parte específica
@@ -342,7 +308,6 @@ public class TGCGame : Game
                 part.Effect.Parameters["View"]?.SetValue(_followCamera.View);
                 part.Effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
             }
-
             mesh.Draw();
         }
     }
@@ -368,7 +333,7 @@ public class TGCGame : Game
     private void DrawCustomFloor()
     {
         _effect.Parameters["World"]?.SetValue(Matrix.Identity);
-        _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.18f, 0.42f, 0.16f)); // Verde pasto
+        _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.13f, 0.53f, 0.10f)); // Verde pasto
 
         foreach (var pass in _effect.CurrentTechnique.Passes)
         {
@@ -380,41 +345,16 @@ public class TGCGame : Game
             );
         }
     }
-
-    //Funciones para dibujar con distintos colores las partes de los modelos
-    /*
-    private void DrawModel(Model model, Matrix world, Random random)
-    {
-        var modelMeshesBaseTransforms = new Matrix[model.Bones.Count];
-        model.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
-        foreach (var mesh in model.Meshes)
-        {
-            var relativeTransform = modelMeshesBaseTransforms[mesh.ParentBone.Index];
-            _effect.Parameters["World"].SetValue(relativeTransform * world);
-            _effect.Parameters["DiffuseColor"].SetValue(RandomColor(_random).ToVector3());
-            mesh.Draw();
-        }
-    }
-    
-    private Color RandomColor(Random random)
-    {
-        // Construye un color aleatorio en base a un entero de 32 bits
-        return new Color((uint)random.Next());
-    }
-    */
     
     //Metodo para dibujar el circuito
     private void BuildCircuit()
     {
         _trackPieces.Clear();
-
-        //int width = 8;  // Eje X
-        int length = 30; // Eje Z
-
+        
         //una recta de 30 partes
-        for (int x = 0; x < length ; x++)
+        for (int i = -10; i < 30 ; i++)
         {
-            AddPiece(roadStraightModel, roadStraightBones, 0f, (float) x, 0, origin); // Tramo Norte
+            AddPiece(roadStraightModel, roadStraightBones, 0f, (float) i, 0, origin);
         }
 
         AddPiece(roadCornerLargeModel, roadCornerBones, 0f, 30f, 0, origin);
@@ -428,8 +368,57 @@ public class TGCGame : Game
         AddPiece(roadStraightModel, roadStraightBones, -8.3f, 26f, 1, origin);
         AddPiece(roadStraightModel, roadStraightBones, -9.3f, 26f, 1, origin);
         AddPiece(roadCornerLargeModel, roadCornerBones, -8f, 26.3f, 3, origin);
-
+        AddPiece(roadCurvedModel, roadCurvedBones, -10.5f, 22f, 0, origin);
+        AddPiece(roadCurvedModel, roadCurvedBones, -11f, 20f, 0, origin);
         
+        for (int i = 19; i > 10 ; i--)
+        {
+            AddPiece(roadStraightModel, roadStraightBones, -11f, (float) i, 0, origin);
+        }
+
+        AddPiece(roadCurvedModel, roadCurvedBones, -11.5f, 9f, 0, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -13.8f, 8f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -14.8f, 8f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -15.8f, 8f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -16.8f, 8f, 1, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -15.5f, 8.3f, 3, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -17.5f, 5f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -17.5f, 4f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -17.5f, 3f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -17.5f, 2f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -17.5f, 1f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -17.5f, 0f, 0, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -17.8f, 1.3f, 2, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -16.8f, -1f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -15.8f, -1f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -14.8f, -1f, 1, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -11.5f, -3f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -11.5f, -4f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -11.5f, -5f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -11.5f, -6f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -11.5f, -7f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -11.5f, -8f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -11.5f, -9f, 0, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -11.8f, -7.5f, 2, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -10.8f, -9.8f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -9.8f, -9.8f, 1, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -6.6f, -11.8f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -6.6f, -12.8f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -6.6f, -13.8f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -6.6f, -14f, 0, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -6.9f, -12.7f, 2, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -6f, -15f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -5.3f, -15f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -4.3f, -15f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -3.3f, -15f, 1, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -2.3f, -15f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -0f, -14f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -0f, -13f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -0f, -12f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -0, -11f, 0, origin);
+
+
+
     }
 
     private void AddPiece(Model model, Matrix[] bones, float gridX, float gridZ, int rotationSteps, Vector3 origin)
@@ -448,7 +437,6 @@ public class TGCGame : Game
             World = world
         });
     }
-
 
     /// <summary>
     ///     Libero los recursos que se cargaron en el juego.
