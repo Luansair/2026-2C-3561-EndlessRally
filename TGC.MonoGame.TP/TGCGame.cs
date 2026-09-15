@@ -42,7 +42,8 @@ public class TGCGame : Game
     private Model roadStraightModel ;
     private Matrix[] roadStraightBones;
     private Model roadRampModel ;
-    private Model roadCurvedSplitModel ;
+    private Model roadCurvedModel ;
+    private Matrix[] roadCurvedBones;
     private Model roadCornerLargeModel ;
     private Matrix[] roadCornerBones;
 
@@ -168,40 +169,28 @@ public class TGCGame : Game
         var rockModel9 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock9"), 0.01f);
         var rockModel10 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock10"), 0.01f);
 
+        //se cargan los modelos del camino
+        roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraight");
+        roadRampModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadRamp");
+        roadCurvedModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCurved");
+        roadCornerLargeModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLarge");
+
         // Cargo un efecto basico propio declarado en el Content pipeline.
         // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
 
-        // Asigno el efecto que cargue a cada parte del mesh.
-        // Un modelo puede tener mas de 1 mesh internamente.
-        /*foreach (var mesh in _model.Meshes)
-        {
-            // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
-            foreach (var meshPart in mesh.MeshParts)
-            {
-                meshPart.Effect = _effect;
-            }
-        }*/
-
-
         ApplyShaderToModel(_carModel, _effect);
 
         _random = new Random(SEED);
-        _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
-        _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, _random);
+        _tree = new Tree(_treeModel, new Vector3(50f,0f,200f), 0, 10);
+        _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(100f, 0f, 200f), 20, 25, _random);
 
         _treesGroup = new DecorationGroup(DecorationType.Tree, 350, [new ModelInfo(_treeModel, 6)]);
         _rocksGroup = new DecorationGroup(DecorationType.Rock, 100, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
-        _area = new DecorationArea(new RectangleShape(new Vector3(200, 0, 0), 300, 250), [_treesGroup, _rocksGroup], _random);
-        _farArea = new DecorationArea(new RectangleShape(new Vector3(0, 0, 1600), 800, 500), [_treesGroup, _rocksGroup], _random);
+        _area = new DecorationArea(new RectangleShape(new Vector3(200, 0, 600), 150, 2000), [_treesGroup, _rocksGroup], _random);
+        _farArea = new DecorationArea(new RectangleShape(new Vector3(-200, 0, 600), 150, 2000), [_treesGroup, _rocksGroup], _random);
 
-        //se cargan los modelos del camino
-        roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraight");
-        roadRampModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadRamp");
-        roadCurvedSplitModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCurvedSplit");
-        roadCornerLargeModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLarge");
-
-        foreach (var model in new[] { roadStraightModel, roadRampModel, roadCurvedSplitModel, roadCornerLargeModel })
+        foreach (var model in new[] { roadStraightModel, roadRampModel, roadCurvedModel, roadCornerLargeModel })
         {
             ApplyShaderToModel(model, _effect);
         }
@@ -210,16 +199,12 @@ public class TGCGame : Game
         {
             { RoadPieceType.STRAIGHT, new RoadPiece(roadStraightModel, new Vector3(0, 0, 10), 0f) },
             { RoadPieceType.RAMP, new RoadPiece(roadRampModel, new Vector3(0, 0, 10), 0f) },
-            { RoadPieceType.CURVEDSPLIT, new RoadPiece(roadCurvedSplitModel, new Vector3(0, 0, 20), -MathHelper.PiOver2) },
-            { RoadPieceType.CURVEDSPLITLEFT, new RoadPiece(roadCurvedSplitModel, new Vector3(0, 0, 20), MathHelper.PiOver2) },
+            { RoadPieceType.CURVEDSPLIT, new RoadPiece(roadCurvedModel, new Vector3(0, 0, 20), -MathHelper.PiOver2) },
+            { RoadPieceType.CURVEDSPLITLEFT, new RoadPiece(roadCurvedModel, new Vector3(0, 0, 20), MathHelper.PiOver2) },
             { RoadPieceType.CORNERLARGE, new RoadPiece(roadCornerLargeModel, new Vector3(0, 0, 20), MathHelper.PiOver2) }
         };
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
         //_roadSpawner = new RoadSpawner(roadDefs, Vector3.Zero, 600f, 100f);
-
-        // 4. Cargar Pista Modular
-        roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraight");
-        roadCornerLargeModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLarge");
 
         roadStraightBones = new Matrix[roadStraightModel.Bones.Count];
         roadStraightModel.CopyAbsoluteBoneTransformsTo(roadStraightBones);
@@ -229,17 +214,22 @@ public class TGCGame : Game
         roadCornerLargeModel.CopyAbsoluteBoneTransformsTo(roadCornerBones);
         ApplyShaderToModel(roadCornerLargeModel, _effect);
 
+        roadCurvedBones = new Matrix[roadCurvedModel.Bones.Count];
+        roadCurvedModel.CopyAbsoluteBoneTransformsTo(roadCurvedBones);
+        ApplyShaderToModel(roadCurvedModel, _effect);
 
-        // Ubicar el auto centrado en la recta inferior
+        //Ubico el auto centrado en la recta del comienzo
         _carPosition = new Vector3(-10f, 0f, 50f);
         carYaw = MathHelper.Pi;
 
-        //Dibujamos el circuito
-        DrawCircuit();
+        //Armamos el circuito (las posiciones de cada parte)
+        BuildCircuit();
 
         base.LoadContent();
     }
 
+
+    //esto es para no repetir codigo, aplica el efecto a cada parte de cada mesh
     private void ApplyShaderToModel(Model model, Effect effect)
     {
         foreach (var mesh in model.Meshes)
@@ -250,7 +240,6 @@ public class TGCGame : Game
             }
         }
     }
-
 
     /// <summary>
     ///     Se llama en cada frame.
@@ -270,8 +259,6 @@ public class TGCGame : Game
             //Salgo del juego.
             Exit();
         }
-
-        //La logica debe ir aca
         if (keyboardState.IsKeyDown(Keys.A))
         {
             // Roto el auto hacia la izquierda
@@ -336,8 +323,6 @@ public class TGCGame : Game
                 mesh.Draw();
             }
         }
-
-        
 
         _tree.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
         _forest.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
@@ -417,10 +402,9 @@ public class TGCGame : Game
         return new Color((uint)random.Next());
     }
     */
-
     
     //Metodo para dibujar el circuito
-    private void DrawCircuit()
+    private void BuildCircuit()
     {
         _trackPieces.Clear();
 
@@ -430,44 +414,25 @@ public class TGCGame : Game
         //una recta de 30 partes
         for (int x = 0; x < length ; x++)
         {
-            AddPiece(roadStraightModel, roadStraightBones, 0, x, 0, origin); // Tramo Norte
+            AddPiece(roadStraightModel, roadStraightBones, 0f, (float) x, 0, origin); // Tramo Norte
         }
 
-        //Vector3 origin = new Vector3(-(width * TileSize) / 2f, 0f, -(length * TileSize) / 2f);
-        /*
-        // 1. Rectas horizontales (Superior e Inferior)
-        for (int x = 2; x < width - 2; x++)
-        {
-            AddPiece(roadStraightModel, roadStraightBones, x, 0, 1, origin);          // Tramo Sur
-            AddPiece(roadStraightModel, roadStraightBones, x, length - 1, 1, origin); // Tramo Norte
-        }
+        AddPiece(roadCornerLargeModel, roadCornerBones, 0f, 30f, 0, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -1f, 32.3f, 3, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -3f, 29f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -3f, 28f, 0, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -3f, 27f, 0, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -5.3f, 26f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -6.3f, 26f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -7.3f, 26f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -8.3f, 26f, 1, origin);
+        AddPiece(roadStraightModel, roadStraightBones, -9.3f, 26f, 1, origin);
+        AddPiece(roadCornerLargeModel, roadCornerBones, -8f, 26.3f, 3, origin);
 
-        // 2. Rectas verticales (Laterales Izquierda y Derecha)
-        for (int z = 1; z <= 2; z++)
-        {
-            AddPiece(roadStraightModel, roadStraightBones, 1, z, 0, origin);          // Tramo Oeste
-            AddPiece(roadStraightModel, roadStraightBones, width - 1, z, 0, origin);  // Tramo Este
-        }
         
-
-        // 3. Las 4 Esquinas (roadCornerLarge)
-        // Esquina Sudoeste (Inferior Izquierda)
-        AddPiece(roadCornerLargeModel, roadCurveBones, 1, 1, 2, origin);
-
-        // Esquina Sudeste (Inferior Derecha)
-        AddPiece(roadCornerLargeModel, roadCurveBones, width - 2, 0, 1, origin);
-
-        // Esquina Noreste (Superior Derecha)
-        AddPiece(roadCornerLargeModel, roadCurveBones, width, length - 3, 0, origin);
-
-        // Esquina Noroeste (Superior Izquierda)
-        AddPiece(roadCornerLargeModel, roadCurveBones, 2, length - 1, 3, origin);
-        */
     }
 
-
-
-    private void AddPiece(Model model, Matrix[] bones, int gridX, int gridZ, int rotationSteps, Vector3 origin)
+    private void AddPiece(Model model, Matrix[] bones, float gridX, float gridZ, int rotationSteps, Vector3 origin)
     {
         Vector3 cellPos = origin + new Vector3(gridX * TileSize, 0f, gridZ * TileSize);
         float angleY = rotationSteps * MathHelper.PiOver2;
