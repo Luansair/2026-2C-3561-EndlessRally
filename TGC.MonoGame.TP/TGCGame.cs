@@ -27,6 +27,8 @@ public class TGCGame : Game
     //private Model _model;
     private Model _carModel;
     private Model _treeModel;
+    private Model _houseModel;
+    private Matrix _houseWorld;
     private DecorationArea _area;
     private DecorationArea _farArea;
     private DecorationGroup _treesGroup;
@@ -152,6 +154,7 @@ public class TGCGame : Game
         // Cargo los modelos.
         _treeModel = Content.Load<Model>(ContentFolder3D + "Tree/Tree");
         _carModel = Content.Load<Model>(ContentFolder3D + "raceCarWhite"); 
+        _houseModel = Content.Load<Model>(ContentFolder3D + "Building3_Big");
         var rockModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock0"), 0.01f);
         var rockModel1 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock1"), 0.01f);
         var rockModel2 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock2"), 0.01f);
@@ -175,6 +178,7 @@ public class TGCGame : Game
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
 
         ApplyShaderToModel(_carModel, _effect);
+        ApplyShaderToModel(_houseModel, _effect);
 
         _random = new Random(SEED);
         _tree = new Tree(_treeModel, new Vector3(50f,0f,200f), 0, 10);
@@ -205,6 +209,14 @@ public class TGCGame : Game
         //Ubico el auto centrado en la recta del comienzo
         _carPosition = new Vector3(-10f, 0f, 100f);
         carYaw = MathHelper.Pi;
+
+        float houseScale = 0.08f; // Probá si necesita escalar (ej. 2f, 0.5f)
+        float houseYaw = MathHelper.ToRadians(-90f); // Rotación para orientar la entrada
+        Vector3 housePosition = new Vector3(70f, 0f, 1200f); // X, Y, Z respecto al origen
+
+        _houseWorld = Matrix.CreateScale(houseScale)
+            * Matrix.CreateRotationY(houseYaw)
+            * Matrix.CreateTranslation(housePosition);
 
         //Armamos el circuito (las posiciones de cada parte)
         BuildCircuit();
@@ -305,6 +317,19 @@ public class TGCGame : Game
             {
                 // Pasamos las matrices al efecto de esta parte específica
                 part.Effect.Parameters["World"]?.SetValue(mesh.ParentBone.Transform * _carWorld);
+                part.Effect.Parameters["View"]?.SetValue(_followCamera.View);
+                part.Effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
+            }
+            mesh.Draw();
+        }
+
+        foreach (var mesh in _houseModel.Meshes)
+        {
+            _effect.Parameters["DiffuseColor"].SetValue(Color.BurlyWood.ToVector3());
+            foreach (var part in mesh.MeshParts)
+            {
+                // Pasamos las matrices al efecto de esta parte específica
+                part.Effect.Parameters["World"]?.SetValue(mesh.ParentBone.Transform * _houseWorld);
                 part.Effect.Parameters["View"]?.SetValue(_followCamera.View);
                 part.Effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
             }
