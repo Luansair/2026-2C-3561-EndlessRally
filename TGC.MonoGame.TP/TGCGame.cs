@@ -167,7 +167,7 @@ public class TGCGame : Game
         _rocksGroup = new DecorationGroup(DecorationType.Rock, 1, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
 
         _area = new DecorationArea(new RectangleShape(new Vector3(200, 0, 0), 300, 250), [_treesGroup, _rocksGroup], _random);
-        _farArea = new DecorationArea(new RectangleShape(new Vector3(0, 0, 1600), 800, 500), [_treesGroup, _rocksGroup], _random);
+        _farArea = new DecorationArea(new RectangleShape(new Vector3(0, 0, 1600), 3600, 7200), [_treesGroup, _rocksGroup], _random);
 
         //se cargan los modelos
         var roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraight");
@@ -196,7 +196,7 @@ public class TGCGame : Game
         var decorationsFactory = new DecorationAreaFactory([_treesGroup, _rocksGroup]);
 
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
-        _roadSpawner = new RoadSpawner(roadDefs, Vector3.Zero, 1000f, 1000f, decorationsFactory);
+        _roadSpawner = new RoadSpawner(roadDefs, Vector3.Zero, 3600f, 7200f, decorationsFactory);
         
 
         base.LoadContent();
@@ -327,10 +327,10 @@ public class TGCGame : Game
 
         _floorVertices = new VertexPositionColor[]
         {
-            new(new Vector3(-size, -0.2f, -size), grassColor),
-            new(new Vector3(size, -0.2f, -size), grassColor),
-            new(new Vector3(size, -0.2f, size), grassColor),
-            new(new Vector3(-size, -0.2f, size), grassColor)
+            new(new Vector3(-size, -1.5f, -size), grassColor),
+            new(new Vector3(size, -1.5f, -size), grassColor),
+            new(new Vector3(size, -1.5f, size), grassColor),
+            new(new Vector3(-size, -1.5f, size), grassColor)
         };
 
         _floorIndices = new short[] { 0, 1, 2, 0, 2, 3 };
