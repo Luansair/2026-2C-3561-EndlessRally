@@ -50,6 +50,11 @@ public class TGCGame : Game
     private Random _random;
     private const int SEED = 0;
 
+
+    // Geometría del piso (vertices e indices)
+    private VertexPositionColor[] _floorVertices;
+    private short[] _floorIndices;
+
     private Tree _tree;
     private Forest _forest;
 
@@ -96,6 +101,10 @@ public class TGCGame : Game
         //creo una camara para seguir a un auto
         _followCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
         _carWorld = Matrix.Identity;
+
+        //crea el piso con un determinado tamaño (init)
+        CreateFloorGeometry(50000f);
+
         base.Initialize();
     }
 
@@ -256,45 +265,16 @@ public class TGCGame : Game
     protected override void Draw(GameTime gameTime)
     {
         // Aca deberiamos poner toda la logia de renderizado del juego.
-        GraphicsDevice.Clear(Color.Black);
-
+        GraphicsDevice.Clear(new Color(110, 160, 230)); // Cielo azul
+        
         // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
         _effect.Parameters["View"].SetValue(_followCamera.View);
         _effect.Parameters["Projection"].SetValue(_followCamera.Projection);
         
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-        for(int i=1; i<=100; i++)
-        {
-            Vector3 nM = Vector3.Zero;
-            nM.X += (float) i * 10;
-            nM.Z += (float) i * 7;
-            _world =  Matrix.CreateTranslation(nM);
-            DrawModel(_model, _world, _random);
-        }
-        for(int i=1; i<=100; i++)
-        {
-            Vector3 nM = Vector3.Zero;
-            nM.X += (float) i * -10;
-            nM.Z += (float) i * 7;
-            _world =  Matrix.CreateTranslation(nM);
-            DrawModel(_model, _world, _random);
-        }
-        for(int i=1; i<=100; i++)
-        {
-            Vector3 nM = Vector3.Zero;
-            nM.X += (float) i * 10;
-            nM.Z += (float) i * -7;
-            _world =  Matrix.CreateTranslation(nM);
-            DrawModel(_model, _world, _random);
-        }
-        for(int i=1; i<=100; i++)
-        {
-            Vector3 nM = Vector3.Zero;
-            nM.X += (float) i * -10;
-            nM.Z += (float) i * -7;
-            _world =  Matrix.CreateTranslation(nM);
-            DrawModel(_model, _world, _random);
-        }
+
+        //Dibujamos un piso
+        DrawCustomFloor();
  
         /*
         _tree.Draw(GraphicsDevice, _effect, _followCamera.View, _followCamera.Projection);
@@ -337,6 +317,40 @@ public class TGCGame : Game
     {
         // Construye un color aleatorio en base a un entero de 32 bits
         return new Color((uint)random.Next());
+    }
+
+    //Creamos geometria del piso 
+    //(basicamente un cuadrado con 4 vertices, segun el tamaño que le pasemos, claramente van a ser dos triangulos grandes)
+    private void CreateFloorGeometry(float size)
+    {
+        Color grassColor = new(34, 110, 34);
+
+        _floorVertices = new VertexPositionColor[]
+        {
+            new(new Vector3(-size, -0.2f, -size), grassColor),
+            new(new Vector3(size, -0.2f, -size), grassColor),
+            new(new Vector3(size, -0.2f, size), grassColor),
+            new(new Vector3(-size, -0.2f, size), grassColor)
+        };
+
+        _floorIndices = new short[] { 0, 1, 2, 0, 2, 3 };
+    }
+
+    //Metodo para que dibuje el piso
+    private void DrawCustomFloor()
+    {
+        _effect.Parameters["World"]?.SetValue(Matrix.Identity);
+        _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.13f, 0.53f, 0.10f)); // Verde pasto
+
+        foreach (var pass in _effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            GraphicsDevice.DrawUserIndexedPrimitives(
+                PrimitiveType.TriangleList,
+                _floorVertices, 0, 4,
+                _floorIndices, 0, 2
+            );
+        }
     }
 
 
