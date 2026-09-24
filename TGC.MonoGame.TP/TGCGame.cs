@@ -33,11 +33,7 @@ public class TGCGame : Game
 
     // Una camara
     private FollowCamera _followCamera;
-    // Posicion del auto a seguir
-    private Vector3 _carPosition = new(0f,0f,0f);
-    //Rotacion del auto
-    private float carYaw = 0f;
-    private float velocidad = 400f;
+
 
 
     //private Matrix _projection;
@@ -45,6 +41,7 @@ public class TGCGame : Game
     //private Matrix _view;
     private Matrix _world;
     private Matrix _carWorld;
+    private Vehiculo auto;
     private Vector3 cameraPos = new(-100f, 200f, -200f);
 
     private Random _random;
@@ -101,6 +98,7 @@ public class TGCGame : Game
         //creo una camara para seguir a un auto
         _followCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
         _carWorld = Matrix.Identity;
+        
 
         //crea el piso con un determinado tamaño (init)
         CreateFloorGeometry(50000f);
@@ -158,7 +156,6 @@ public class TGCGame : Game
                 meshPart.Effect = _effect;
             }
         }
-
         _random = new Random(SEED);
         _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
         _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, _random);
@@ -198,6 +195,9 @@ public class TGCGame : Game
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
         _roadSpawner = new RoadSpawner(roadDefs, Vector3.Zero, 3600f, 7200f, decorationsFactory);
         
+        //tenemos que hacer la eleccion de tipo y modelo 
+        ModelInfo modeloVehiculo = new ModelInfo(_carModel, 1);
+        auto = new Vehiculo(Vehiculo.VEHICULOSDEFS[TipoVehiculo.LIGERO], modeloVehiculo, new Vector3(0, 0, 0));
 
         base.LoadContent();
     }
@@ -207,6 +207,11 @@ public class TGCGame : Game
     ///     Se debe escribir toda la logica de computo del modelo, asi como tambien verificar entradas del usuario y reacciones
     ///     ante ellas.
     /// </summary>
+    // Posicion del auto a seguir
+    private Vector3 _carPosition = new(0f, 0f, 0f);
+    //Rotacion del auto
+    private float carYaw = 0f;
+    private float velocidad = 400f;
     protected override void Update(GameTime gameTime)
     {
         // Aca deberiamos poner toda la logica de actualizacion del juego.
@@ -221,36 +226,12 @@ public class TGCGame : Game
             Exit();
         }
 
-        //La logica debe ir aca
-        if (keyboardState.IsKeyDown(Keys.A))
-        {
-            // Roto el auto hacia la izquierda
-            carYaw += MathHelper.ToRadians(100f) * elapsedTime;
-        }
-        if (keyboardState.IsKeyDown(Keys.D))
-        {
-            // Roto el auto hacia la derecha
-            carYaw -= MathHelper.ToRadians(100f) * elapsedTime;
-        }
-
-        //obtengo la direccion del auto
-        Vector3 direccion = _carWorld.Forward;
-
-        if (keyboardState.IsKeyDown(Keys.W))
-        {
-            // Muevo el auto hacia adelante
-            _carPosition += direccion * velocidad * elapsedTime;
-        }
-        if (keyboardState.IsKeyDown(Keys.S))
-        {
-            // Muevo el auto hacia atras
-            _carPosition -= direccion * velocidad * elapsedTime;
-        }
+        auto.Update(gameTime, keyboardState, _carWorld.Forward);
 
         //Actualizo la matriz de mundo del auto con la rotacion respecto al eje Y 
         // y con el vector3 de posicion, siguiendo la regla de SRT
-        _carWorld = Matrix.CreateRotationY(carYaw) * Matrix.CreateTranslation(_carPosition);
-
+        //_carWorld = Matrix.CreateRotationY(carYaw) * Matrix.CreateTranslation(_carPosition);
+        _carWorld = auto.getCarWorld();
         // Actualizo la camara, enviandole la matriz de mundo del auto.
         _followCamera.Update(gameTime, _carWorld);
         _roadSpawner.Update(_carPosition);
@@ -284,20 +265,7 @@ public class TGCGame : Game
         */
         _roadSpawner.Draw(_effect, _followCamera.View, _followCamera.Projection);
 
-        //Dibujo el auto a seguir
-        foreach (var mesh in _carModel.Meshes)
-        {
-            _effect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
-            foreach (var part in mesh.MeshParts)
-            {
-                // Pasamos las matrices al efecto de esta parte específica
-                part.Effect.Parameters["World"]?.SetValue(mesh.ParentBone.Transform * _carWorld);
-                part.Effect.Parameters["View"]?.SetValue(_followCamera.View);
-                part.Effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
-            }
-
-            mesh.Draw();
-        }
+        auto.Draw(_effect,_followCamera.View,_followCamera.Projection);
     }
 
     private void DrawModel(Model model, Matrix world, Random random)
