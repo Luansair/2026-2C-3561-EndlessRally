@@ -37,30 +37,41 @@ namespace TGC.MonoGame.TP
     public class Vehiculo
     {
         public static Dictionary<TipoVehiculo, StatVehiculo> VEHICULOSDEFS = new Dictionary<TipoVehiculo, StatVehiculo> {
-            {TipoVehiculo.LIGERO,new StatVehiculo(100f,10f,150f,100f,50f)},
-            {TipoVehiculo.MEDIANO, new StatVehiculo(125f,5f,100f,85f,100f)},
-            {TipoVehiculo.PESADO, new StatVehiculo(150f,1f,50f,50f,150f)}
+            {TipoVehiculo.LIGERO,new StatVehiculo(100f,10f,300f,100f,50f)},
+            {TipoVehiculo.MEDIANO, new StatVehiculo(125f,5f,3000f,85f,100f)},
+            {TipoVehiculo.PESADO, new StatVehiculo(150f,1f,2000f,50f,150f)}
         };
         public StatVehiculo stats;
         public ModelInfo modelI { get; }
-        public float currentHealth, currentFuel;
+        public TipoVehiculo Tipo { get; }
+
+        public float currentHealth { get; set; }
+        public float currentFuel { get; set; }
         public Vector3 pos;
         public int score;
-        public float carYaw=0f;
+        public float carYaw;
         public BoundingBox hitbox;
 
-        public Vehiculo(StatVehiculo stats, ModelInfo model, Vector3 pos)
+        private readonly Matrix[] _boneTransforms;
+
+        public Vehiculo(TipoVehiculo tipo, ModelInfo model, Vector3 initialPos, float initialYaw)
         {
-            this.stats = stats;
+            this.Tipo = tipo;
+            this.stats = VEHICULOSDEFS[tipo];
             this.modelI = model;
+            this.pos = initialPos;
+            this.carYaw = initialYaw;
+            
             this.currentFuel = stats.maxFuel;
             this.currentHealth = stats.maxHealth;
-            this.pos = pos;
+
+            _boneTransforms = new Matrix[modelI.Model.Bones.Count];
+            modelI.Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
         }
 
         //  Hay que aplicarle la logica del turnspeed el fuel etc
         //  Vector3 direccion = carworld.Foward
-        public void Update(GameTime gameTime, KeyboardState keyboardState, Vector3 direccion) {  
+        public void Update(GameTime gameTime, KeyboardState keyboardState) {  
             float velocidad = this.stats.accel;
             float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -72,6 +83,7 @@ namespace TGC.MonoGame.TP
             {
                 this.carYaw -= MathHelper.ToRadians(100f) * elapsedTime;
             }
+            Vector3 direccion = this.getCarWorld().Forward;
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 this.pos += direccion * velocidad * elapsedTime;
@@ -84,7 +96,7 @@ namespace TGC.MonoGame.TP
 
         public Matrix getCarWorld()
         {
-            return Matrix.CreateRotationY(this.carYaw) * Matrix.CreateTranslation(this.pos);
+            return Matrix.CreateScale(modelI.Scale) * Matrix.CreateRotationY(this.carYaw) * Matrix.CreateTranslation(this.pos);
         }
 
         public void DrawHitbox()
@@ -109,7 +121,7 @@ namespace TGC.MonoGame.TP
                     part.Effect = effect;
                 }
 
-                effect.Parameters["World"].SetValue(relativeTransform * carWorld);
+                effect.Parameters["World"]?.SetValue(_boneTransforms[mesh.ParentBone.Index] * carWorld);
                 effect.Parameters["View"].SetValue(view);
                 effect.Parameters["Projection"].SetValue(projection);
                 effect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
