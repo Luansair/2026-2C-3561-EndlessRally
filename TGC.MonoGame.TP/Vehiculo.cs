@@ -37,9 +37,9 @@ namespace TGC.MonoGame.TP
     public class Vehiculo
     {
         public static Dictionary<TipoVehiculo, StatVehiculo> VEHICULOSDEFS = new Dictionary<TipoVehiculo, StatVehiculo> {
-            {TipoVehiculo.LIGERO,new StatVehiculo(100f,10f,300f,100f,50f)},
-            {TipoVehiculo.MEDIANO, new StatVehiculo(125f,5f,3000f,85f,100f)},
-            {TipoVehiculo.PESADO, new StatVehiculo(150f,1f,2000f,50f,150f)}
+            {TipoVehiculo.LIGERO,new StatVehiculo(100f,10f,50f,100f,50f)},
+            {TipoVehiculo.MEDIANO, new StatVehiculo(125f,5f,30f,85f,100f)},
+            {TipoVehiculo.PESADO, new StatVehiculo(150f,1f,20f,50f,150f)}
         };
         public StatVehiculo stats;
         public ModelInfo modelI { get; }
@@ -72,7 +72,7 @@ namespace TGC.MonoGame.TP
         //  Hay que aplicarle la logica del turnspeed el fuel etc
         //  Vector3 direccion = carworld.Foward
         public void Update(GameTime gameTime, KeyboardState keyboardState) {  
-            float velocidad = this.stats.accel;
+            float velocidad = this.stats.accel * 100f;
             float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             if (keyboardState.IsKeyDown(Keys.A))

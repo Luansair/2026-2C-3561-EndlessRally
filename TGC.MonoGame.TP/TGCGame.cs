@@ -23,8 +23,6 @@ public class TGCGame : Game
     private readonly GraphicsDeviceManager _graphics;
 
     private Effect _effect;
-    private Model _model;
-    private Model _carModel;
     private Model _treeModel;
     private DecorationArea _area;
     private DecorationArea _farArea;
@@ -36,8 +34,6 @@ public class TGCGame : Game
 
 
     private SpriteBatch _spriteBatch;
-    //private Matrix _view;
-    private Vehiculo auto;
 
     private Random _random;
     private const int SEED = 0;
@@ -117,7 +113,7 @@ public class TGCGame : Game
 
         _treeModel = Content.Load<Model>(ContentFolder3D + "Tree/Tree");
 
-        var ligeroModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "raceCarWhite"), 0.23f);
+        var ligeroModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "raceCarWhiteV2"), 0.01f);
         var medianoModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Kenney_Cars/hatchback-sportsV2"), 0.01f);
         var pesadoModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Kenney_Cars/suvV2"), 0.01f);
 
@@ -218,6 +214,7 @@ public class TGCGame : Game
 
         if (!_enCarrera)
         {
+            _menuCarYaw += elapsedTime * 1.5f;
             // Cambiar de auto con flechas
             if (keyboardState.IsKeyDown(Keys.Right) && _prevKeyboard.IsKeyUp(Keys.Right))
             {
@@ -246,17 +243,6 @@ public class TGCGame : Game
         }
 
         _prevKeyboard = keyboardState;
-
-
-        //auto.Update(gameTime, keyboardState, _carWorld.Forward);
-
-        //Actualizo la matriz de mundo del auto con la rotacion respecto al eje Y 
-        // y con el vector3 de posicion, siguiendo la regla de SRT
-        //_carWorld = Matrix.CreateRotationY(carYaw) * Matrix.CreateTranslation(_carPosition);
-        //_carWorld = auto.getCarWorld();
-        // Actualizo la camara, enviandole la matriz de mundo del auto.
-        //_followCamera.Update(gameTime, _carWorld);
-        //_roadSpawner.Update(_carPosition);
         _roadSpawner.Update(_vehiculoActual.pos);
 
         base.Update(gameTime);
@@ -282,17 +268,13 @@ public class TGCGame : Game
 
     private void DrawMenu()
     {
-        // Fondo oscuro estilo concesionaria / garaje
         GraphicsDevice.Clear(new Color(24, 26, 32));
-
-        // Cámara fija del menú mirando al centro (0, 0, 0)
         Matrix menuView = Matrix.CreateLookAt(new Vector3(0f, 6f, 18f), new Vector3(0f, 1.5f, 0f), Vector3.Up);
         Matrix menuProj = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(50f), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
 
         _effect.Parameters["View"]?.SetValue(menuView);
         _effect.Parameters["Projection"]?.SetValue(menuProj);
 
-        // Dibujamos el auto seleccionado girando en el centro
         Matrix menuCarWorld = Matrix.CreateScale(_vehiculoActual.modelI.Scale * 1.5f)
                             * Matrix.CreateRotationY(_menuCarYaw)
                             * Matrix.CreateTranslation(Vector3.Zero);
@@ -342,8 +324,7 @@ public class TGCGame : Game
 
         _roadSpawner.Draw(_effect, _followCamera.View, _followCamera.Projection);
 
-        //GizmoPrimitives.DrawBoundingBox(GraphicsDevice, _effect, auto.hitbox.Min, auto.hitbox.Max, auto.getCarWorld(), _followCamera.View, _followCamera.Projection, Microsoft.Xna.Framework.Color.Blue);
-        //auto.Draw(_effect,_followCamera.View,_followCamera.Projection);
+        GizmoPrimitives.DrawBoundingBox(GraphicsDevice, _effect, _vehiculoActual.hitbox.Min, _vehiculoActual.hitbox.Max, _vehiculoActual.getCarWorld(), _followCamera.View, _followCamera.Projection, Microsoft.Xna.Framework.Color.Blue);
         _vehiculoActual.Draw(_effect, _followCamera.View, _followCamera.Projection);
     }
 

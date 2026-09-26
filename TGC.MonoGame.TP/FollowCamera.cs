@@ -18,7 +18,6 @@ internal class FollowCamera
 
     private Vector3 _currentBackVector = Vector3.Backward;
     private Vector3 _pastBackVector = Vector3.Backward;
-    private float _backVectorInterpolator;
 
     public FollowCamera(float aspectRatio)
     {
