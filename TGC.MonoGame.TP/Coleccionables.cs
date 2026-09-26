@@ -11,8 +11,9 @@ namespace TGC.MonoGame.TP
 {
     public abstract class Collectible
     {
-        protected readonly ModelInfo modelI;
-        protected readonly Vector3 pos;
+        public ModelInfo modelI;
+        public readonly Vector3 pos;
+        public BoundingBox hitbox { get; private set; }
 
         public bool Collected { get; private set; }
 
@@ -20,18 +21,30 @@ namespace TGC.MonoGame.TP
         {
             this.modelI = model; 
             this.pos = pos;
-            this.Collected = true;
+            this.hitbox = GizmoPrimitives.CreateAABBFrom(model.Model);
+            //this.hitbox = GizmoPrimitives.TransformAABB(GizmoPrimitives.CreateAABBFrom(model.Model), Matrix.CreateScale(modelI.Scale) * Matrix.CreateTranslation(pos));
+            this.Collected = false;
         }
 
         //esto hay que pasarlo en la colision 
+
         public void tryCollect(Vehiculo vehiculo)
         {
-            if (Collected) return;
+            if (!this.checkCollision(vehiculo.hitboxWorld) || Collected) return;
             apply(vehiculo);
             Collected = true;
         }
+        public bool checkCollision(BoundingBox vehiculoHitboxWorld)
+        {
+            var world = Matrix.CreateScale(modelI.Scale) * Matrix.CreateTranslation(pos);
+            var corners = hitbox.GetCorners();
+            for (int i = 0; i < corners.Length; i++)
+                corners[i] = Vector3.Transform(corners[i], world);
 
-        protected abstract void apply(Vehiculo vehiculo);
+            var hitboxWorld = BoundingBox.CreateFromPoints(corners);
+            return hitboxWorld.Intersects(vehiculoHitboxWorld);
+        }
+        public abstract void apply(Vehiculo vehiculo);
 
         public void Draw(Effect effect, Matrix view, Matrix projection,GameTime gameTime)
         {
@@ -60,20 +73,20 @@ namespace TGC.MonoGame.TP
     {
         private readonly int points;
         public FichaCollectible(ModelInfo model, Vector3 pos, int points) : base(model, pos) => this.points = points;
-        protected override void apply(Vehiculo v) => v.score += points;
+        public override void apply(Vehiculo v) => v.score += points;
     }
 
     public class FuelCollectible : Collectible
     {
         private readonly float fuel;
         public FuelCollectible(ModelInfo model, Vector3 pos, float amount) : base(model, pos) => fuel = amount;
-        protected override void apply(Vehiculo v) => v.currentFuel = Math.Min(v.currentFuel + fuel, v.stats.maxHealth);
+        public override void apply(Vehiculo v) => v.currentFuel = Math.Min(v.currentFuel + fuel, v.stats.maxFuel);
     }
 
     public class WrenchCollectible : Collectible
     {
         private readonly float hp;
         public WrenchCollectible(ModelInfo model, Vector3 pos, float amount) : base(model, pos) => hp = amount;
-        protected override void apply(Vehiculo v) => v.currentHealth = Math.Min(v.currentFuel + hp, v.stats.maxHealth);
+        public override void apply(Vehiculo v) => v.currentHealth = Math.Min(v.currentFuel + hp, v.stats.maxHealth);
     }
 }
