@@ -33,7 +33,7 @@ namespace TGC.MonoGame.TP
             this.maxHealth = maxHealth;
         }
     }
-
+   
     public class Vehiculo
     {
         public static Dictionary<TipoVehiculo, StatVehiculo> VEHICULOSDEFS = new Dictionary<TipoVehiculo, StatVehiculo> {
@@ -47,6 +47,7 @@ namespace TGC.MonoGame.TP
         public Vector3 pos;
         public int score;
         public float carYaw=0f;
+        public BoundingBox hitbox;
 
         public Vehiculo(StatVehiculo stats, ModelInfo model, Vector3 pos)
         {
@@ -85,6 +86,12 @@ namespace TGC.MonoGame.TP
         {
             return Matrix.CreateRotationY(this.carYaw) * Matrix.CreateTranslation(this.pos);
         }
+
+        public void DrawHitbox()
+        {
+
+        }
+
         public void Draw(Effect effect, Matrix view, Matrix projection)
         {
             foreach (ModelMesh mesh in modelI.Model.Meshes)
