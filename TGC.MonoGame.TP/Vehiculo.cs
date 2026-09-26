@@ -94,16 +94,26 @@ namespace TGC.MonoGame.TP
 
         public void Draw(Effect effect, Matrix view, Matrix projection)
         {
-            foreach (ModelMesh mesh in modelI.Model.Meshes)
+            var model = modelI.Model;
+            var boneTransforms = new Matrix[model.Bones.Count];
+            model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+
+            var carWorld = this.getCarWorld();
+
+            foreach (ModelMesh mesh in model.Meshes)
             {
+                var relativeTransform = boneTransforms[mesh.ParentBone.Index];
+
                 foreach (ModelMeshPart part in mesh.MeshParts)
                 {
                     part.Effect = effect;
-                    effect.Parameters["World"].SetValue(this.getCarWorld());
-                    effect.Parameters["View"].SetValue(view);
-                    effect.Parameters["Projection"].SetValue(projection);
-                    effect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
                 }
+
+                effect.Parameters["World"].SetValue(relativeTransform * carWorld);
+                effect.Parameters["View"].SetValue(view);
+                effect.Parameters["Projection"].SetValue(projection);
+                effect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
+
                 mesh.Draw();
             }
         }
