@@ -8,7 +8,8 @@ namespace TGC.MonoGame.TP
         Tree,
         Rock,
         Bush,
-        Flower
+        Flower,
+        House
     }
     /// <summary>
     ///     Esta clase es la que se encarga de manejar el arbol.
@@ -64,22 +65,28 @@ namespace TGC.MonoGame.TP
                            Matrix.CreateRotationY(rotation) *
                            Matrix.CreateTranslation(position) *
                            parentWorld;
+            
+            var boneTransforms = new Matrix[_model.Model.Bones.Count];
+            _model.Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+            
+            Vector3 diffuseColor = _type switch
+            {
+                DecorationType.Tree => Color.DarkGreen.ToVector3(),
+                DecorationType.Rock => Color.Gray.ToVector3(),
+                DecorationType.House => Color.White.ToVector3(),
+                _ => Color.White.ToVector3()
+            };
+
             foreach (ModelMesh mesh in _model.Model.Meshes)
             {
                 foreach (ModelMeshPart part in mesh.MeshParts)
                 {
                     part.Effect = effect;
-                    effect.Parameters["World"].SetValue(world);
+
+                    effect.Parameters["World"].SetValue(boneTransforms[mesh.ParentBone.Index] * world);
                     effect.Parameters["View"].SetValue(view);
                     effect.Parameters["Projection"].SetValue(projection);
-                    if (_type == DecorationType.Tree)
-                    {
-                        effect.Parameters["DiffuseColor"].SetValue(Color.DarkGreen.ToVector3());
-                    }
-                    else if (_type == DecorationType.Rock)
-                    {
-                        effect.Parameters["DiffuseColor"].SetValue(Color.Gray.ToVector3());
-                    }
+                    effect.Parameters["DiffuseColor"].SetValue(diffuseColor);
                 }
                 mesh.Draw();
             }

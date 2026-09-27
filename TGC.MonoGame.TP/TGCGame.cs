@@ -61,9 +61,6 @@ public class TGCGame : Game
     private VertexPositionColor[] _floorVertices;
     private short[] _floorIndices;
 
-    private Tree _tree;
-    private Forest _forest;
-
     /// <summary>
     ///     Constructor del juego.
     /// </summary>
@@ -110,6 +107,8 @@ public class TGCGame : Game
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
 
         _treeModel = Content.Load<Model>(ContentFolder3D + "Tree/Tree");
+        var houseModel = Content.Load<Model>(ContentFolder3D + "Building_Big");
+        ApplyShaderToModel(houseModel, _effect);
 
         var ligeroModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "raceCarWhiteV2"), 0.01f);
         var medianoModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Kenney_Cars/hatchback-sportsV2"), 0.01f);
@@ -144,6 +143,13 @@ public class TGCGame : Game
         _treesGroup = new DecorationGroup(DecorationType.Tree, 3, [new ModelInfo(_treeModel, 2.8f)]);
         _rocksGroup = new DecorationGroup(DecorationType.Rock, 1, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
 
+        
+        var houseModelInfo = new ModelInfo(houseModel, 0.02f);
+        var houseGroup = new DecorationGroup(DecorationType.House, 1, [houseModelInfo]);
+        var natureRecipes = new List<DecorationGroup> { _treesGroup, _rocksGroup };
+        var houseRecipes = new List<DecorationGroup> { houseGroup };
+        var decorationsFactory = new DecorationAreaFactory(natureRecipes, houseRecipes);
+
         //se cargan los modelos
         var roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraightV2");
         var roadRampModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadRamp");
@@ -166,16 +172,10 @@ public class TGCGame : Game
             { RoadPieceType.CORNERLARGELEFT, new RoadPiece(roadCornerModel, new Vector3(-15f, 0, 15f), -MathHelper.PiOver2) }
         };
 
-        var decorationsFactory = new DecorationAreaFactory([_treesGroup, _rocksGroup]);
 
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
         // Spawn a 400 unidades adelante (~20 a 30 piezas) y despawn a 200 unidades atrás
         _roadSpawner = new RoadSpawner(roadDefs, new Vector3(0f, 0.05f, 0f), 400f, 200f, decorationsFactory);
-        //tenemos que hacer la eleccion de tipo y modelo 
-        /*
-        ModelInfo modeloVehiculo = new ModelInfo(_carModel, 1);
-        auto = new Vehiculo(Vehiculo.VEHICULOSDEFS[TipoVehiculo.LIGERO], modeloVehiculo, new Vector3(0, 0, 0));
-        auto.hitbox = CreateAABBFrom(_carModel);*/
         base.LoadContent();
     }
 
