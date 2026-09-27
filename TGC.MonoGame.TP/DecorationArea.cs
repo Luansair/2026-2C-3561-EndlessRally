@@ -17,6 +17,9 @@ namespace TGC.MonoGame.TP
             _shape = shape;
             _random = random;
             _decorations = new List<Decoration>();
+            
+            if (_shape == null)
+                return;
 
             foreach (DecorationGroup recipe in recipes)
             {
@@ -49,6 +52,8 @@ namespace TGC.MonoGame.TP
 
         public void DrawRelativeTo(Matrix parentWorld, Effect effect, Matrix view, Matrix projection)
         {
+            if (_shape == null)
+            return;
             foreach (Decoration decoration in _decorations)
             {
                 decoration.DrawRelativeTo(parentWorld, effect, view, projection);

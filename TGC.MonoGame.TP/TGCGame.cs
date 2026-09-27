@@ -127,9 +127,9 @@ public class TGCGame : Game
 
         _vehiculoActual = _opcionesVehiculos[_indiceVehiculoSeleccionado];
 
-        var rockModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock0"), 0.01f);
-        var rockModel1 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock1"), 0.01f);
-        var rockModel2 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock2"), 0.01f);
+        var rockModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock0"), 0.008f);
+        var rockModel1 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock1"), 0.008f);
+        var rockModel2 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock2"), 0.008f);
         var rockModel3 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock3"), 0.01f);
         var rockModel4 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock4"), 0.01f);
         var rockModel5 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock5"), 0.01f);
@@ -140,10 +140,8 @@ public class TGCGame : Game
         var rockModel10 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock10"), 0.01f);
         
         _random = new Random(SEED);
-        _tree = new Tree(_treeModel, Vector3.Zero, 0, 10);
-        _forest = new Forest([new ModelInfo(_treeModel, 6)], new Vector3(0, 0, 200), 100, 25, _random);
 
-        _treesGroup = new DecorationGroup(DecorationType.Tree, 3, [new ModelInfo(_treeModel, 6)]);
+        _treesGroup = new DecorationGroup(DecorationType.Tree, 3, [new ModelInfo(_treeModel, 2.8f)]);
         _rocksGroup = new DecorationGroup(DecorationType.Rock, 1, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
 
         //se cargan los modelos
