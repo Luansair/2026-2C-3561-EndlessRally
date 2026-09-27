@@ -182,18 +182,25 @@ public class TGCGame : Game
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
         _roadSpawner = new RoadSpawner(roadDefs, Vector3.Zero, 3600f, 7200f, decorationsFactory);
         
-        var collectibleModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere"), 0.05f);
-        foreach (var mesh in collectibleModel.Model.Meshes)
+        var collectibleModelWrench = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Wrench/Monkey-Wrench"), 0.1f);
+        var collectibleModelFuel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Fuel/gascylinder"), 0.1f);
+        var collectibleModelCoin = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/gems_monogame/gem1"), 1f);
+        var collectibleModelObstacle = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere"), 0.05f);
+        foreach (var coll in new ModelInfo[] { collectibleModelWrench, collectibleModelCoin, collectibleModelFuel, collectibleModelObstacle })
         {
-            foreach (var meshPart in mesh.MeshParts)
+            foreach (var mesh in coll.Model.Meshes)
             {
-                meshPart.Effect = _effect;
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = _effect;
+                }
             }
         }
         //despues hay que pasarlo al roadspawnder
-        collectibles.Add(new FichaCollectible(collectibleModel, new Vector3(0f, 0f, -150f), 10));
-        collectibles.Add(new FichaCollectible(collectibleModel, new Vector3(50f, 0f, -150f), 10));
-        collectibles.Add(new FichaCollectible(collectibleModel, new Vector3(-50f, 0f, -150f), 10));
+        collectibles.Add(new WrenchCollectible(collectibleModelWrench, new Vector3(0f, 0f, -150f), 10));
+        collectibles.Add(new FuelCollectible(collectibleModelFuel, new Vector3(50f, 0f, -150f), 10));
+        collectibles.Add(new FichaCollectible(collectibleModelCoin, new Vector3(-50f, 0f, -150f), 10));
+        collectibles.Add(new DamageCollectible(collectibleModelObstacle, new Vector3(-50f, 0f, -350f), 10));
 
         base.LoadContent();
     }
@@ -263,8 +270,8 @@ public class TGCGame : Game
 
 
         //_vehiculoActual.Update(gameTime, keyboardState, _carWorld.Forward);
-
-        this.Window.Title = "Score: " + _vehiculoActual.score;
+        
+        this.Window.Title = "Score: " + _vehiculoActual.score + " Fuel: " + _vehiculoActual.currentFuel + " Health: " + _vehiculoActual.currentHealth;
         //Actualizo la matriz de mundo del _vehiculoActual con la rotacion respecto al eje Y 
         // y con el vector3 de posicion, siguiendo la regla de SRT
 
