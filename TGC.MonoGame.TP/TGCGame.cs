@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TGC.MonoGame.TP;
 
@@ -83,7 +85,7 @@ public class TGCGame : Game
     protected override void Initialize()
     {
         // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
-        //creo una camara para seguir a un auto
+        //creo una camara para seguir a un _vehiculoActual
         _followCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
         
         //crea el piso con un determinado tamaño
@@ -92,12 +94,16 @@ public class TGCGame : Game
     }
 
     RoadSpawner _roadSpawner;
+
+    //esto tiene que ir en el roadSpawner despues
+    List<Collectible> collectibles = new List<Collectible>();
     
     /// <summary>
     ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
     ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
     ///     que podemos pre calcular para nuestro juego.
     /// </summary>
+    
     protected override void LoadContent()
     {
         // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
@@ -174,6 +180,19 @@ public class TGCGame : Game
 
 
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
+        var collectibleModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere"), 0.05f);
+        foreach (var mesh in collectibleModel.Model.Meshes)
+        {
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                meshPart.Effect = _effect;
+            }
+        }
+        //despues hay que pasarlo al roadspawnder
+        collectibles.Add(new FichaCollectible(collectibleModel, new Vector3(0f, 0f, -150f), 10));
+        collectibles.Add(new FichaCollectible(collectibleModel, new Vector3(50f, 0f, -150f), 10));
+        collectibles.Add(new FichaCollectible(collectibleModel, new Vector3(-50f, 0f, -150f), 10));
+
         // Spawn a 400 unidades adelante (~20 a 30 piezas) y despawn a 200 unidades atrás
         _roadSpawner = new RoadSpawner(roadDefs, new Vector3(0f, 0.05f, 0f), 400f, 200f, decorationsFactory);
         base.LoadContent();
@@ -209,6 +228,7 @@ public class TGCGame : Game
             Exit();
         }
 
+
         if (!_enCarrera)
         {
             _menuCarYaw += elapsedTime * 1.5f;
@@ -237,14 +257,26 @@ public class TGCGame : Game
             // Todo el movimiento se delega a la clase
             _vehiculoActual.Update(gameTime, keyboardState);
             _followCamera.Update(gameTime, _vehiculoActual.getCarWorld());
+            checkCollisions();
         }
 
         _prevKeyboard = keyboardState;
+
+        this.Window.Title = "Score: " + _vehiculoActual.score;
         _roadSpawner.Update(_vehiculoActual.pos);
+
 
         base.Update(gameTime);
     }
 
+    private void checkCollisions()
+    {
+        foreach (Collectible coll in collectibles)
+        {
+            if (coll.Collected) continue;
+            coll.tryCollect(_vehiculoActual);
+        }
+    }
 
     protected override void Draw(GameTime gameTime)
     {
@@ -272,6 +304,7 @@ public class TGCGame : Game
         _effect.Parameters["View"]?.SetValue(menuView);
         _effect.Parameters["Projection"]?.SetValue(menuProj);
 
+        // Dibujamos el _vehiculoActual seleccionado girando en el centro
         Matrix menuCarWorld = Matrix.CreateScale(_vehiculoActual.modelI.Scale * 1.5f)
                             * Matrix.CreateRotationY(_menuCarYaw)
                             * Matrix.CreateTranslation(Vector3.Zero);
@@ -294,7 +327,7 @@ public class TGCGame : Game
         string titulo = "SELECCIONA TU VEHICULO";
         string nombreVehiculo = $"< {_vehiculoActual.Tipo} >";
         string statsTexto = $"Velocidad/Acel: {_vehiculoActual.stats.accel} | Giro: {_vehiculoActual.stats.turnSpeed} | Tanque: {_vehiculoActual.stats.maxFuel}";
-        string ayuda = "[FLECHAS] Cambiar auto    -    [ENTER] Empezar Carrera";
+        string ayuda = "[FLECHAS] Cambiar _vehiculoActual    -    [ENTER] Empezar Carrera";
 
         _spriteBatch.DrawString(_font, titulo, new Vector2(50, 40), Color.Gold);
         _spriteBatch.DrawString(_font, nombreVehiculo, new Vector2(50, 80), Color.White);
@@ -320,9 +353,38 @@ public class TGCGame : Game
         DrawCustomFloor();
 
         _roadSpawner.Draw(_effect, _followCamera.View, _followCamera.Projection);
-
         GizmoPrimitives.DrawBoundingBox(GraphicsDevice, _effect, _vehiculoActual.hitbox.Min, _vehiculoActual.hitbox.Max, _vehiculoActual.getCarWorld(), _followCamera.View, _followCamera.Projection, Microsoft.Xna.Framework.Color.Blue);
         _vehiculoActual.Draw(_effect, _followCamera.View, _followCamera.Projection);
+
+
+        //mandar a func en coll
+        foreach (Collectible coll in collectibles)
+        {
+            if (coll.Collected) continue;
+            coll.Draw(_effect, _followCamera.View, _followCamera.Projection, gameTime);
+            var hitWorld = Matrix.CreateScale(coll.modelI.Scale) * Matrix.CreateTranslation(coll.pos);
+            GizmoPrimitives.DrawBoundingBox(GraphicsDevice, _effect, coll.hitbox.Min, coll.hitbox.Max, hitWorld, _followCamera.View, _followCamera.Projection, Microsoft.Xna.Framework.Color.Blue);
+
+        }
+    }
+
+    private void DrawModel(Model model, Matrix world, Random random)
+    {
+        var modelMeshesBaseTransforms = new Matrix[model.Bones.Count];
+        model.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+        foreach (var mesh in model.Meshes)
+        {
+            var relativeTransform = modelMeshesBaseTransforms[mesh.ParentBone.Index];
+            _effect.Parameters["World"].SetValue(relativeTransform * world);
+            _effect.Parameters["DiffuseColor"].SetValue(RandomColor(_random).ToVector3());
+            mesh.Draw();
+        }
+    }
+
+    private Color RandomColor(Random random)
+    {
+        // Construye un color aleatorio en base a un entero de 32 bits
+        return new Color((uint)random.Next());
     }
 
     //Creamos geometria del piso 
@@ -357,40 +419,7 @@ public class TGCGame : Game
             );
         }
     }
-    public BoundingBox CreateAABBFrom(Model model)
-    {
-        var minPoint = Vector3.One * float.MaxValue;
-        var maxPoint = Vector3.One * float.MinValue;
-
-        var transforms = new Matrix[model.Bones.Count];
-        model.CopyAbsoluteBoneTransformsTo(transforms);
-
-        var meshes = model.Meshes;
-        for (int index = 0; index < meshes.Count; index++)
-        {
-            var meshParts = meshes[index].MeshParts;
-            for (int subIndex = 0; subIndex < meshParts.Count; subIndex++)
-            {
-                var vertexBuffer = meshParts[subIndex].VertexBuffer;
-                var declaration = vertexBuffer.VertexDeclaration;
-                var vertexSize = declaration.VertexStride / sizeof(float);
-
-                var rawVertexBuffer = new float[vertexBuffer.VertexCount * vertexSize];
-                vertexBuffer.GetData(rawVertexBuffer);
-
-                for (var vertexIndex = 0; vertexIndex < rawVertexBuffer.Length; vertexIndex += vertexSize)
-                {
-                    var transform = transforms[meshes[index].ParentBone.Index];
-                    var vertex = new Vector3(rawVertexBuffer[vertexIndex], rawVertexBuffer[vertexIndex + 1], rawVertexBuffer[vertexIndex + 2]);
-                    vertex = Vector3.Transform(vertex, transform);
-                    minPoint = Vector3.Min(minPoint, vertex);
-                    maxPoint = Vector3.Max(maxPoint, vertex);
-                }
-            }
-        }
-
-        return new BoundingBox(minPoint, maxPoint);
-    }
+   
 
     /// <summary>
     ///     Libero los recursos que se cargaron en el juego.

@@ -52,6 +52,7 @@ namespace TGC.MonoGame.TP
         public float carYaw;
         public BoundingBox hitbox;
 
+        public BoundingBox hitboxWorld => GizmoPrimitives.TransformAABB(hitbox, getCarWorld());
         private readonly Matrix[] _boneTransforms;
 
         public Vehiculo(TipoVehiculo tipo, ModelInfo model, Vector3 initialPos, float initialYaw)
@@ -64,9 +65,9 @@ namespace TGC.MonoGame.TP
             
             this.currentFuel = stats.maxFuel;
             this.currentHealth = stats.maxHealth;
-
             _boneTransforms = new Matrix[modelI.Model.Bones.Count];
             modelI.Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
+            this.hitbox = GizmoPrimitives.CreateAABBFrom(model.Model);
         }
 
         //  Hay que aplicarle la logica del turnspeed el fuel etc
@@ -99,13 +100,9 @@ namespace TGC.MonoGame.TP
             return Matrix.CreateScale(modelI.Scale) * Matrix.CreateRotationY(this.carYaw) * Matrix.CreateTranslation(this.pos);
         }
 
-        public void DrawHitbox()
-        {
-
-        }
-
         public void Draw(Effect effect, Matrix view, Matrix projection)
         {
+
             var model = modelI.Model;
             var boneTransforms = new Matrix[model.Bones.Count];
             model.CopyAbsoluteBoneTransformsTo(boneTransforms);
