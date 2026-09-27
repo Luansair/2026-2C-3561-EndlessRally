@@ -158,15 +158,14 @@ public class TGCGame : Game
         //se define un dicc con Tipo de camino  y los modelo con sus datos (offset para la siguiente posisicion y si rota o no)
         var roadDefs = new Dictionary<RoadPieceType, RoadPiece>
         {
-            // Recta: 10 unidades hacia adelante (+Z)
             { RoadPieceType.STRAIGHT, new RoadPiece(roadStraightModel, new Vector3(0, 0, 10f), 0f) },
             { RoadPieceType.RAMP, new RoadPiece(roadRampModel, new Vector3(0, 0, 10f), 0f) },
 
-            // Curva derecha: avanza 20 en X, 20 en Z y rota 90°
-            { RoadPieceType.CORNERLARGE, new RoadPiece(roadCornerLeftModel, new Vector3(20f, 0, 20f), MathHelper.PiOver2) },
+            // Curva derecha: offset real al centro del carril de salida (15, 0, 15)
+            { RoadPieceType.CORNERLARGE, new RoadPiece(roadCornerLeftModel, new Vector3(15f, 0, 15f), MathHelper.PiOver2) },
 
-            // Curva izquierda: retrocede 20 en X, avanza 20 en Z y rota -90°
-            { RoadPieceType.CORNERLARGELEFT, new RoadPiece(roadCornerModel, new Vector3(-20f, 0, 20f), -MathHelper.PiOver2) }
+            // Curva izquierda: offset real (-15, 0, 15)
+            { RoadPieceType.CORNERLARGELEFT, new RoadPiece(roadCornerModel, new Vector3(-15f, 0, 15f), -MathHelper.PiOver2) }
         };
 
         var decorationsFactory = new DecorationAreaFactory([_treesGroup, _rocksGroup]);
