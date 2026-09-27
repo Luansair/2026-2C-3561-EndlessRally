@@ -7,8 +7,8 @@ namespace TGC.MonoGame.TP
     {
         STRAIGHT,
         RAMP,
-        CURVEDSPLIT,
-        CURVEDSPLITLEFT
+        CORNERLARGE,
+        CORNERLARGELEFT,
     }
 
     public struct RoadPiece
@@ -38,6 +38,7 @@ namespace TGC.MonoGame.TP
 
         public void Draw(Effect effect, Matrix view, Matrix projection)
         {
+            effect.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
             var boneTransforms = new Matrix[Model.Bones.Count];
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 

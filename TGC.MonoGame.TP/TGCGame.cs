@@ -24,8 +24,6 @@ public class TGCGame : Game
 
     private Effect _effect;
     private Model _treeModel;
-    private DecorationArea _area;
-    private DecorationArea _farArea;
     private DecorationGroup _treesGroup;
     private DecorationGroup _rocksGroup;
 
@@ -148,32 +146,34 @@ public class TGCGame : Game
         _treesGroup = new DecorationGroup(DecorationType.Tree, 3, [new ModelInfo(_treeModel, 6)]);
         _rocksGroup = new DecorationGroup(DecorationType.Rock, 1, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
 
-        _area = new DecorationArea(new RectangleShape(new Vector3(200, 0, 0), 300, 250), [_treesGroup, _rocksGroup], _random);
-        _farArea = new DecorationArea(new RectangleShape(new Vector3(0, 0, 1600), 3600, 7200), [_treesGroup, _rocksGroup], _random);
-
         //se cargan los modelos
-        var roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraight");
+        var roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraightV2");
         var roadRampModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadRamp");
-        var roadCurvedSplitModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCurvedSplit");
-
-        foreach (var model in new[] { roadStraightModel, roadRampModel, roadCurvedSplitModel })
+        var roadCornerModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLargeV2");
+        var roadCornerLeftModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLargeLeft");
+        foreach (var model in new[] { roadStraightModel, roadRampModel, roadCornerModel, roadCornerLeftModel })
         {
             ApplyShaderToModel(model, _effect);
         }
         //se define un dicc con Tipo de camino  y los modelo con sus datos (offset para la siguiente posisicion y si rota o no)
         var roadDefs = new Dictionary<RoadPieceType, RoadPiece>
         {
-            { RoadPieceType.STRAIGHT, new RoadPiece(roadStraightModel, new Vector3(0, 0, 10), 0f) },
-            { RoadPieceType.RAMP, new RoadPiece(roadRampModel, new Vector3(0, 0, 10), 0f) },
-            { RoadPieceType.CURVEDSPLIT, new RoadPiece(roadCurvedSplitModel, new Vector3(0, 0, 20), -MathHelper.PiOver2) },
-            { RoadPieceType.CURVEDSPLITLEFT, new RoadPiece(roadCurvedSplitModel, new Vector3(0, 0, 20), MathHelper.PiOver2) }
+            // Recta: 10 unidades hacia adelante (+Z)
+            { RoadPieceType.STRAIGHT, new RoadPiece(roadStraightModel, new Vector3(0, 0, 10f), 0f) },
+            { RoadPieceType.RAMP, new RoadPiece(roadRampModel, new Vector3(0, 0, 10f), 0f) },
+
+            // Curva derecha: avanza 20 en X, 20 en Z y rota 90°
+            { RoadPieceType.CORNERLARGE, new RoadPiece(roadCornerLeftModel, new Vector3(20f, 0, 20f), MathHelper.PiOver2) },
+
+            // Curva izquierda: retrocede 20 en X, avanza 20 en Z y rota -90°
+            { RoadPieceType.CORNERLARGELEFT, new RoadPiece(roadCornerModel, new Vector3(-20f, 0, 20f), -MathHelper.PiOver2) }
         };
 
         var decorationsFactory = new DecorationAreaFactory([_treesGroup, _rocksGroup]);
 
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
-        _roadSpawner = new RoadSpawner(roadDefs, Vector3.Zero, 3600f, 7200f, decorationsFactory);
-        
+        // Spawn a 400 unidades adelante (~20 a 30 piezas) y despawn a 200 unidades atrás
+        _roadSpawner = new RoadSpawner(roadDefs, new Vector3(0f, 0.05f, 0f), 400f, 200f, decorationsFactory);
         //tenemos que hacer la eleccion de tipo y modelo 
         /*
         ModelInfo modeloVehiculo = new ModelInfo(_carModel, 1);
@@ -346,7 +346,8 @@ public class TGCGame : Game
     //Metodo para que dibuje el piso
     private void DrawCustomFloor()
     {
-        _effect.Parameters["World"]?.SetValue(Matrix.Identity);
+        Matrix floorWorld = Matrix.CreateTranslation(new Vector3(0f, -0.2f, 0f));
+        _effect.Parameters["World"]?.SetValue(floorWorld);
         _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.13f, 0.53f, 0.10f)); // Verde pasto
 
         foreach (var pass in _effect.CurrentTechnique.Passes)

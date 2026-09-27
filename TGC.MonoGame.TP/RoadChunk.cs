@@ -10,6 +10,9 @@ namespace TGC.MonoGame.TP
         private readonly RoadSegment _road;
         private readonly DecorationArea _decorations;
 
+        // Exponemos la posición para que el Spawner sepa dónde está
+        public Vector3 Position => _road.World.Translation;
+
         public RoadChunk(int index, Matrix world, RoadSegment road, DecorationArea decorations)
         {
             _index = index;
@@ -21,7 +24,6 @@ namespace TGC.MonoGame.TP
         {
             _road.Draw(effect, view, projection);
             _decorations.DrawRelativeTo(_road.World, effect, view, projection);
-
         }
     }
 }

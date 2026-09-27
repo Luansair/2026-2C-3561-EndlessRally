@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Runtime;
+using System.Xml.Schema;
 
 namespace TGC.MonoGame.TP
 {
@@ -18,6 +19,7 @@ namespace TGC.MonoGame.TP
         private readonly DecorationAreaFactory _decorationFactory;
         //distancia a la que spawnea camino
         private readonly float spawnDistance;
+        private readonly float despawnDistance;
         //cantidad maxima para despawn
         private readonly int maxRoads;
 
@@ -39,6 +41,7 @@ namespace TGC.MonoGame.TP
             random = new Random();
             _decorationFactory = decorationFactory;
             _chunksGenerados = 0;
+            this.despawnDistance = despawnDistance;
 
             this.spawnDistance = spawnDistance;
             maxRoads = (int)((spawnDistance + despawnDistance) / TileLength) + 30;
@@ -48,7 +51,7 @@ namespace TGC.MonoGame.TP
 
             lastType = RoadPieceType.STRAIGHT;
             sameRoadRacha = 0;
-            for (int i = 0; i < maxRoads; i++)
+            for (int i = 0; i < 40; i++)
             {
                 SpawnNext();
             }
@@ -56,16 +59,26 @@ namespace TGC.MonoGame.TP
 
         public void Update(Vector3 carPosition)
         {
-            //    SpawnNext();
+            // Generar hacia adelante si el auto se acerca al final
             while (Vector3.Distance(nextPos, carPosition) < spawnDistance)
             {
                 SpawnNext();
             }
 
-            //culling/despawn
-            while (colaSegmentos.Count > maxRoads)
+            // Despawn inteligente: SOLO borrar si la pieza más vieja quedó LEJOS del auto
+            while (colaSegmentos.Count > 0)
             {
-                colaSegmentos.Dequeue();
+                var oldestChunk = colaSegmentos.Peek();
+                
+                // Si la distancia entre el auto y el chunk más viejo supera despawnDistance, recién ahí se elimina
+                if (Vector3.Distance(oldestChunk.Position, carPosition) > despawnDistance)
+                {
+                    colaSegmentos.Dequeue();
+                }
+                else
+                {
+                    break; // Si la pieza más vieja aún está cerca del auto, no borramos nada
+                }
             }
         }
 
@@ -80,10 +93,9 @@ namespace TGC.MonoGame.TP
         private void SpawnNext()
         {
             RoadPieceType typeNow = nextType();
-            curving = !curving ? typeNow == RoadPieceType.CURVEDSPLIT || typeNow == RoadPieceType.CURVEDSPLITLEFT: false;
-
             RoadPiece def = defs[typeNow];
 
+            // 1. Matriz de mundo de la pieza actual
             Matrix world = Matrix.CreateRotationY(nextRot) * Matrix.CreateTranslation(nextPos);
 
             var roadSegment = new RoadSegment(def.model, world);
@@ -93,14 +105,21 @@ namespace TGC.MonoGame.TP
             colaSegmentos.Enqueue(chunk);
             _chunksGenerados++;
 
+            // 2. Desplazamos el punto de spawn hacia el final de la pieza actual
             Vector3 offset = Vector3.Transform(def.offsetLocal, Matrix.CreateRotationY(nextRot));
             nextPos += offset;
-            //esto es para que no vaya hacia atras y no pueda hacer una vuelta cerrada
-            nextRot += nextRot + def.rotacionY != 0 ? -def.rotacionY : def.rotacionY;
-            
-            lastType = typeNow;
-            if (!curving) sameRoadRacha = typeNow == lastType ? sameRoadRacha + 1 : 1;
 
+            // 3. Acumulamos el ángulo para las piezas que vienen después
+            nextRot += def.rotacionY;
+            nextRot = MathHelper.WrapAngle(nextRot);
+
+            lastType = typeNow;
+            
+            // Si la pieza fue recta sumamos racha; si fue curva la reiniciamos
+            if (typeNow == RoadPieceType.STRAIGHT)
+                sameRoadRacha++;
+            else
+                sameRoadRacha = 0;
         }
 
         public RoadChunk GetCurrentSegment()
@@ -108,37 +127,27 @@ namespace TGC.MonoGame.TP
             if (colaSegmentos.Count == 0) return null;
             return colaSegmentos.Peek();
         }
-        bool curving  = false;
-        int curvingCount  = 2;
         private RoadPieceType nextType()
         {
-            if (curving) //para evitar 2 curvas segudas
-            {
-                curvingCount--;
-                if (curvingCount == 0)
-                {
-                    curving = false;
-                    curvingCount = 2;
-                }
+            // Obligar a que haya al menos 3 rectas entre curvas
+            if (sameRoadRacha < 3)
                 return RoadPieceType.STRAIGHT;
-            }
-            if (sameRoadRacha <= 2)
-            {
+
+            // 60% de probabilidad de seguir en línea recta
+            if (random.NextDouble() < 0.6)
                 return RoadPieceType.STRAIGHT;
-            }
 
-            RoadPieceType[] pool =
-            [
-                RoadPieceType.STRAIGHT,
-                RoadPieceType.STRAIGHT,
-                RoadPieceType.STRAIGHT,
-                RoadPieceType.RAMP,
-                RoadPieceType.RAMP,
-                RoadPieceType.CURVEDSPLIT,
-                RoadPieceType.CURVEDSPLITLEFT,
-            ];
+            // Control para no dar giros en U ni volver hacia atrás:
+            // Si el camino ya está inclinado a la derecha (> 45°), doblamos a la izquierda
+            if (nextRot > MathHelper.ToRadians(45f))
+                return RoadPieceType.CORNERLARGELEFT;
 
-            return pool[random.Next(pool.Length)];
+            // Si ya está inclinado a la izquierda (< -45°), doblamos a la derecha
+            if (nextRot < -MathHelper.ToRadians(45f))
+                return RoadPieceType.CORNERLARGE;
+
+            // Si viene relativamente recto, 50% para cada lado
+            return random.Next(2) == 0 ? RoadPieceType.CORNERLARGE : RoadPieceType.CORNERLARGELEFT;
         }
     }
 }

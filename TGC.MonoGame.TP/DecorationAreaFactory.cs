@@ -17,9 +17,9 @@ namespace TGC.MonoGame.TP
 
         public DecorationArea CreateFor(RoadPiece roadPiece, int chunkIndex)
         {
-            float roadHalfWidth = 30f;
-            float decorationMargin = 20f;
-            float outerHalfWidth = 120f;
+            float roadHalfWidth = 60f;
+            float decorationMargin = 60f;
+            float outerHalfWidth = 300f;
 
             float safeStart = roadHalfWidth + decorationMargin;
             float sideWidth = outerHalfWidth - safeStart;
