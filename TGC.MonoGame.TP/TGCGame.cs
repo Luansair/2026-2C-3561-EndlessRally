@@ -207,9 +207,9 @@ public class TGCGame : Game
             }
         }
         //despues hay que pasarlo al roadspawnder
-        collectibles.Add(new FichaCollectible(collectibleModel, new Vector3(0f, 0f, -150f), 10));
-        collectibles.Add(new FichaCollectible(collectibleModel, new Vector3(50f, 0f, -150f), 10));
-        collectibles.Add(new FichaCollectible(collectibleModel, new Vector3(-50f, 0f, -150f), 10));
+        collectibles.Add(new FichaCollectible(collectibleModelWrench, new Vector3(0f, 0f, -150f), 10));
+        collectibles.Add(new FichaCollectible(collectibleModelFuel, new Vector3(50f, 0f, -150f), 10));
+        collectibles.Add(new FichaCollectible(collectibleModelCoin, new Vector3(-50f, 0f, -150f), 10));
 
         // Spawn a 400 unidades adelante (~20 a 30 piezas) y despawn a 200 unidades atrás
         _roadSpawner = new RoadSpawner(roadDefs, new Vector3(0f, 0.05f, 0f), 400f, 200f, decorationsFactory);
