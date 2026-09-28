@@ -58,9 +58,10 @@ public class TGCGame : Game
     //pantalla de menu
     private SpriteFont _font;
     private float _menuCarYaw = 30f;
+    public static Texture2D DefaultTexture { get; private set; }
 
     // Geometría del piso (vertices e indices)
-    private VertexPositionColor[] _floorVertices;
+    private VertexPositionNormalTexture[] _floorVertices;
     private short[] _floorIndices;
 
     /// <summary>
@@ -110,20 +111,33 @@ public class TGCGame : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _font = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "DefaultFont");
 
+        DefaultTexture = new Texture2D(GraphicsDevice, 1, 1);
+        DefaultTexture.SetData(new[] { Color.White });
+        
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+        _effect.Parameters["baseTexture"]?.SetValue(DefaultTexture);
+        
+        //les asignamos valores a los parametros de iluminacion
+        //_effect.Parameters["lightAmbientColor"]?.SetValue(new Vector3(0.55f, 0.58f, 0.65f));
+        _effect.Parameters["lightAmbientColor"]?.SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+        _effect.Parameters["KAmbient"]?.SetValue(0.60f);
+        
+        _effect.Parameters["lightDiffuseColor"]?.SetValue(new Vector3(1.0f, 0.98f, 0.92f));
+        _effect.Parameters["KDiffuse"]?.SetValue(0.70f);
+        
+        _effect.Parameters["lightSpecularColor"]?.SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+        _effect.Parameters["KSpecular"]?.SetValue(0.20f);
+        _effect.Parameters["shininess"]?.SetValue(18.0f);
 
         _treeModel = Content.Load<Model>(ContentFolder3D + "Tree/Tree");
         var houseModel = Content.Load<Model>(ContentFolder3D + "Building_Big");
-        ApplyShaderToModel(houseModel, _effect);
+        var houseModelInfo = new ModelInfo(houseModel, 0.02f);
+        
 
         var ligeroModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "raceCarWhiteV2"), 0.01f);
         var medianoModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Kenney_Cars/hatchback-sportsV2"), 0.01f);
         var pesadoModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Kenney_Cars/suvV2"), 0.01f);
 
-        ApplyShaderToModel(ligeroModel.Model, _effect);
-        ApplyShaderToModel(medianoModel.Model, _effect);
-        ApplyShaderToModel(pesadoModel.Model, _effect);
-        
         Vector3 largada = new Vector3(0f, 0f, 0f);
 
         _opcionesVehiculos.Add(new Vehiculo(TipoVehiculo.LIGERO, ligeroModel, largada, MathHelper.Pi));
@@ -132,17 +146,17 @@ public class TGCGame : Game
 
         _vehiculoActual = _opcionesVehiculos[_indiceVehiculoSeleccionado];
 
-        var rockModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock0"), 0.008f);
-        var rockModel1 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock1"), 0.008f);
+        var rockModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock0"), 0.002f);
+        var rockModel1 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock1"), 0.003f);
         var rockModel2 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock2"), 0.008f);
-        var rockModel3 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock3"), 0.01f);
-        var rockModel4 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock4"), 0.01f);
-        var rockModel5 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock5"), 0.01f);
-        var rockModel6 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock6"), 0.01f);
-        var rockModel7 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock7"), 0.01f);
-        var rockModel8 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock8"), 0.01f);
-        var rockModel9 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock9"), 0.01f);
-        var rockModel10 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock10"), 0.01f);
+        var rockModel3 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock3"), 0.008f);
+        var rockModel4 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock4"), 0.008f);
+        var rockModel5 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock5"), 0.008f);
+        var rockModel6 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock6"), 0.008f);
+        var rockModel7 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock7"), 0.008f);
+        var rockModel8 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock8"), 0.008f);
+        var rockModel9 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock9"), 0.008f);
+        var rockModel10 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock10"), 0.008f);
         
         _random = new Random(SEED);
 
@@ -150,7 +164,7 @@ public class TGCGame : Game
         _rocksGroup = new DecorationGroup(DecorationType.Rock, 1, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
 
         
-        var houseModelInfo = new ModelInfo(houseModel, 0.02f);
+        
         var houseGroup = new DecorationGroup(DecorationType.House, 1, [houseModelInfo]);
         var natureRecipes = new List<DecorationGroup> { _treesGroup, _rocksGroup };
         var houseRecipes = new List<DecorationGroup> { houseGroup };
@@ -161,23 +175,22 @@ public class TGCGame : Game
         var roadRampModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadRamp");
         var roadCornerModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLargeV2");
         var roadCornerLeftModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLargeLeft");
-        foreach (var model in new[] { roadStraightModel, roadRampModel, roadCornerModel, roadCornerLeftModel })
-        {
-            ApplyShaderToModel(model, _effect);
-        }
+        var straightInfo = new ModelInfo(roadStraightModel, 1f);
+        var rampInfo = new ModelInfo(roadRampModel, 1f);
+        var cornerInfo = new ModelInfo(roadCornerModel, 1f);
+        var cornerLeftInfo = new ModelInfo(roadCornerLeftModel, 1f);
         //se define un dicc con Tipo de camino  y los modelo con sus datos (offset para la siguiente posisicion y si rota o no)
         var roadDefs = new Dictionary<RoadPieceType, RoadPiece>
         {
-            { RoadPieceType.STRAIGHT, new RoadPiece(roadStraightModel, new Vector3(0, 0, 10f), 0f) },
-            { RoadPieceType.RAMP, new RoadPiece(roadRampModel, new Vector3(0, 0, 10f), 0f) },
+            { RoadPieceType.STRAIGHT, new RoadPiece(straightInfo, new Vector3(0, 0, 10f), 0f) },
+            { RoadPieceType.RAMP, new RoadPiece(rampInfo, new Vector3(0, 0, 10f), 0f) },
 
             // Curva derecha: offset real al centro del carril de salida (15, 0, 15)
-            { RoadPieceType.CORNERLARGE, new RoadPiece(roadCornerLeftModel, new Vector3(15f, 0, 15f), MathHelper.PiOver2) },
+            { RoadPieceType.CORNERLARGE, new RoadPiece(cornerLeftInfo, new Vector3(15f, 0, 15f), MathHelper.PiOver2) },
 
             // Curva izquierda: offset real (-15, 0, 15)
-            { RoadPieceType.CORNERLARGELEFT, new RoadPiece(roadCornerModel, new Vector3(-15f, 0, 15f), -MathHelper.PiOver2) }
+            { RoadPieceType.CORNERLARGELEFT, new RoadPiece(cornerInfo, new Vector3(-15f, 0, 15f), -MathHelper.PiOver2) }
         };
-
 
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
         var collectibleModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere"), 0.05f);
@@ -216,19 +229,14 @@ public class TGCGame : Game
     /// </summary>
     protected override void Update(GameTime gameTime)
     {
-        // Aca deberiamos poner toda la logica de actualizacion del juego.
         float elapsedTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
-        // Capturo el estado del teclado.
         var keyboardState = Keyboard.GetState();
-        
-        // Capturar Input teclado
+
         if (keyboardState.IsKeyDown(Keys.Escape))
         {
             //Salgo del juego.
             Exit();
         }
-
-
         if (!_enCarrera)
         {
             _menuCarYaw += elapsedTime * 1.5f;
@@ -254,6 +262,10 @@ public class TGCGame : Game
         }
         else
         {
+            Vector3 lightOffset = new Vector3(400f, 500f, 400f);
+            Vector3 lightPosition = _vehiculoActual.pos + lightOffset;
+            _effect.Parameters["lightPosition"]?.SetValue(lightPosition);
+            _effect.Parameters["eyePosition"]?.SetValue(_followCamera.Position);
             // Todo el movimiento se delega a la clase
             _vehiculoActual.Update(gameTime, keyboardState);
             _followCamera.Update(gameTime, _vehiculoActual.getCarWorld());
@@ -297,30 +309,45 @@ public class TGCGame : Game
 
     private void DrawMenu()
     {
+        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        GraphicsDevice.BlendState = BlendState.Opaque;
+        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+
         GraphicsDevice.Clear(new Color(24, 26, 32));
-        Matrix menuView = Matrix.CreateLookAt(new Vector3(0f, 6f, 18f), new Vector3(0f, 1.5f, 0f), Vector3.Up);
+
+        Vector3 menuCameraPos = new Vector3(0f, 6f, 18f);
+        Matrix menuView = Matrix.CreateLookAt(menuCameraPos, new Vector3(0f, 1.5f, 0f), Vector3.Up);
         Matrix menuProj = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(50f), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
 
         _effect.Parameters["View"]?.SetValue(menuView);
         _effect.Parameters["Projection"]?.SetValue(menuProj);
+        
+        // Luz cenital para el showroom
+        _effect.Parameters["lightPosition"]?.SetValue(new Vector3(10f, 25f, 15f));
+        _effect.Parameters["eyePosition"]?.SetValue(menuCameraPos);
 
-        // Dibujamos el _vehiculoActual seleccionado girando en el centro
         Matrix menuCarWorld = Matrix.CreateScale(_vehiculoActual.modelI.Scale * 1.5f)
                             * Matrix.CreateRotationY(_menuCarYaw)
                             * Matrix.CreateTranslation(Vector3.Zero);
 
-        _effect.Parameters["DiffuseColor"]?.SetValue(Color.White.ToVector3());
-
-        // Obtenemos los huesos del modelo seleccionado
         var bones = new Matrix[_vehiculoActual.modelI.Model.Bones.Count];
         _vehiculoActual.modelI.Model.CopyAbsoluteBoneTransformsTo(bones);
 
         foreach (var mesh in _vehiculoActual.modelI.Model.Meshes)
         {
-            _effect.Parameters["World"]?.SetValue(bones[mesh.ParentBone.Index] * menuCarWorld);
+            Matrix meshWorld = bones[mesh.ParentBone.Index] * menuCarWorld;
+            Matrix invTranspose = Matrix.Transpose(Matrix.Invert(meshWorld));
+
+            foreach (var part in mesh.MeshParts)
+            {
+                part.Effect = _effect;
+                _effect.Parameters["World"]?.SetValue(meshWorld);
+                _effect.Parameters["InverseTransposeWorld"]?.SetValue(invTranspose);
+                _effect.Parameters["baseTexture"]?.SetValue(TGCGame.DefaultTexture);
+                _effect.Parameters["DiffuseColor"]?.SetValue(Color.White.ToVector3());
+            }
             mesh.Draw();
         }
-
         // Dibujar interfaz de usuario en 2D
         _spriteBatch.Begin();
 
@@ -368,36 +395,17 @@ public class TGCGame : Game
         }
     }
 
-    private void DrawModel(Model model, Matrix world, Random random)
-    {
-        var modelMeshesBaseTransforms = new Matrix[model.Bones.Count];
-        model.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
-        foreach (var mesh in model.Meshes)
-        {
-            var relativeTransform = modelMeshesBaseTransforms[mesh.ParentBone.Index];
-            _effect.Parameters["World"].SetValue(relativeTransform * world);
-            _effect.Parameters["DiffuseColor"].SetValue(RandomColor(_random).ToVector3());
-            mesh.Draw();
-        }
-    }
-
-    private Color RandomColor(Random random)
-    {
-        // Construye un color aleatorio en base a un entero de 32 bits
-        return new Color((uint)random.Next());
-    }
-
     //Creamos geometria del piso 
     //(basicamente un cuadrado con 4 vertices, segun el tamaño que le pasemos, claramente van a ser dos triangulos grandes)
     private void CreateFloorGeometry(float size)
     {
-        Color grassColor = new(34, 110, 34);
-        _floorVertices = new VertexPositionColor[]
+        Vector3 up = Vector3.Up;
+        _floorVertices = new VertexPositionNormalTexture[]
         {
-            new(new Vector3(-size, -1.5f, -size), grassColor),
-            new(new Vector3(size, -1.5f, -size), grassColor),
-            new(new Vector3(size, -1.5f, size), grassColor),
-            new(new Vector3(-size, -1.5f, size), grassColor)
+            new(new Vector3(-size, -1.5f, -size), up, new Vector2(0f, 0f)),
+            new(new Vector3(size, -1.5f, -size),  up, new Vector2(100f, 0f)),
+            new(new Vector3(size, -1.5f, size),   up, new Vector2(100f, 100f)),
+            new(new Vector3(-size, -1.5f, size),  up, new Vector2(0f, 100f))
         };
         _floorIndices = new short[] { 0, 1, 2, 0, 2, 3 };
     }
@@ -406,8 +414,13 @@ public class TGCGame : Game
     private void DrawCustomFloor()
     {
         Matrix floorWorld = Matrix.CreateTranslation(new Vector3(0f, -0.2f, 0f));
+        Matrix invTransposeFloor = Matrix.Transpose(Matrix.Invert(floorWorld));
         _effect.Parameters["World"]?.SetValue(floorWorld);
+        _effect.Parameters["View"]?.SetValue(_followCamera.View);
+        _effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
+        _effect.Parameters["InverseTransposeWorld"]?.SetValue(invTransposeFloor);
         _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.13f, 0.53f, 0.10f)); // Verde pasto
+        _effect.Parameters["baseTexture"]?.SetValue(DefaultTexture);
 
         foreach (var pass in _effect.CurrentTechnique.Passes)
         {

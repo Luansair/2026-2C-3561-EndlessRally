@@ -98,7 +98,7 @@ namespace TGC.MonoGame.TP
             // 1. Matriz de mundo de la pieza actual
             Matrix world = Matrix.CreateRotationY(nextRot) * Matrix.CreateTranslation(nextPos);
 
-            var roadSegment = new RoadSegment(def.model, world);
+            var roadSegment = new RoadSegment(def.ModelInfo, world);
             var decorations = _decorationFactory.CreateFor(def, _chunksGenerados);
             var chunk = new RoadChunk(_chunksGenerados, world, roadSegment, decorations);
 

@@ -103,27 +103,54 @@ namespace TGC.MonoGame.TP
         public void Draw(Effect effect, Matrix view, Matrix projection)
         {
 
+            Matrix carWorld = Matrix.CreateScale(modelI.Scale) *
+                      Matrix.CreateRotationY(carYaw) * // o la rotación/orientación que uses
+                      Matrix.CreateTranslation(pos);
+
             var model = modelI.Model;
             var boneTransforms = new Matrix[model.Bones.Count];
             model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
-            var carWorld = this.getCarWorld();
+            // Si tiene textura propia la usa y DiffuseColor en blanco; si no, textura blanca por defecto
+            Texture2D textureToUse = modelI.Texture ?? TGCGame.DefaultTexture;
+            Vector3 diffuseColor = modelI.Texture != null 
+                ? Color.White.ToVector3() 
+                : Color.White.ToVector3(); // O el color de carrocería que quieras si no tiene textura
 
-            foreach (ModelMesh mesh in model.Meshes)
+            foreach (var mesh in model.Meshes)
             {
-                var relativeTransform = boneTransforms[mesh.ParentBone.Index];
+                // Matriz por hueso
+                Matrix meshWorld = boneTransforms[mesh.ParentBone.Index] * carWorld;
+                Matrix invTranspose = Matrix.Transpose(Matrix.Invert(meshWorld));
 
-                foreach (ModelMeshPart part in mesh.MeshParts)
+                foreach (var part in mesh.MeshParts)
                 {
                     part.Effect = effect;
+
+                    effect.Parameters["World"].SetValue(meshWorld);
+                    effect.Parameters["View"].SetValue(view);
+                    effect.Parameters["Projection"].SetValue(projection);
+                    effect.Parameters["InverseTransposeWorld"].SetValue(invTranspose);
+
+                    // Si tenemos registrado el material de esta parte, lo aplicamos
+                    if (modelI.PartMaterials.TryGetValue(part, out var mat))
+                    {
+                        if (mat.Texture != null)
+                        {
+                            // Tiene archivo de textura (ej. las casas o carteles)
+                            effect.Parameters["baseTexture"]?.SetValue(mat.Texture);
+                            effect.Parameters["DiffuseColor"].SetValue(Vector3.One);
+                        }
+                        else
+                        {
+                            // Es color de material plano (los autos y la pista)
+                            effect.Parameters["baseTexture"]?.SetValue(TGCGame.DefaultTexture);
+                            effect.Parameters["DiffuseColor"].SetValue(mat.DiffuseColor);
+                        }
+                    }
+
+                    mesh.Draw();
                 }
-
-                effect.Parameters["World"]?.SetValue(_boneTransforms[mesh.ParentBone.Index] * carWorld);
-                effect.Parameters["View"].SetValue(view);
-                effect.Parameters["Projection"].SetValue(projection);
-                effect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
-
-                mesh.Draw();
             }
         }
     }

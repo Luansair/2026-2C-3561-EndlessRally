@@ -29,6 +29,7 @@ internal class FollowCamera
 
     public Matrix Projection { get; private set; }
     public Matrix View { get; private set; }
+    public Vector3 Position { get; private set; }
 
     public void Reset(Matrix initialWorld)
     {
@@ -62,7 +63,8 @@ internal class FollowCamera
         var cameraPosition = followedPosition
                             + _currentBackVector * DistanceBack
                             + Vector3.Up * DistanceUp;
-
+        
+        Position = cameraPosition;
         // Vector de visión hacia el vehículo
         var forward = followedPosition - cameraPosition;
         forward.Normalize();
