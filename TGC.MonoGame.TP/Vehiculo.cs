@@ -37,9 +37,9 @@ namespace TGC.MonoGame.TP
     public class Vehiculo
     {
         public static Dictionary<TipoVehiculo, StatVehiculo> VEHICULOSDEFS = new Dictionary<TipoVehiculo, StatVehiculo> {
-            {TipoVehiculo.LIGERO,new StatVehiculo(100f,10f,50f,100f,50f)},
-            {TipoVehiculo.MEDIANO, new StatVehiculo(125f,5f,30f,85f,100f)},
-            {TipoVehiculo.PESADO, new StatVehiculo(150f,1f,20f,50f,150f)}
+            {TipoVehiculo.LIGERO,new StatVehiculo(100f,0.1f,300f,100f,50f)},
+            {TipoVehiculo.MEDIANO, new StatVehiculo(125f,0.05f,3000f,85f,100f)},
+            {TipoVehiculo.PESADO, new StatVehiculo(150f,0.01f,2000f,50f,150f)}
         };
         public StatVehiculo stats;
         public ModelInfo modelI { get; }
@@ -72,10 +72,18 @@ namespace TGC.MonoGame.TP
 
         //  Hay que aplicarle la logica del turnspeed el fuel etc
         //  Vector3 direccion = carworld.Foward
-        public void Update(GameTime gameTime, KeyboardState keyboardState) {  
-            float velocidad = this.stats.accel * 100f;
+        public void Update(GameTime gameTime, KeyboardState keyboardState) {
+            float velocidad = this.stats.accel;
             float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
+            Vector3 direccion = this.getCarWorld().Forward;
+            if (keyboardState.IsKeyDown(Keys.Up))
+            {
+                this.pos += direccion * velocidad * elapsedTime;
+            }
+            if (keyboardState.IsKeyDown(Keys.Down))
+            {
+                this.pos -= direccion * velocidad * elapsedTime;
+            }
             if (keyboardState.IsKeyDown(Keys.A))
             {
                 this.carYaw += MathHelper.ToRadians(100f) * elapsedTime;
@@ -84,15 +92,21 @@ namespace TGC.MonoGame.TP
             {
                 this.carYaw -= MathHelper.ToRadians(100f) * elapsedTime;
             }
-            Vector3 direccion = this.getCarWorld().Forward;
+            if (currentFuel<= 0 || currentHealth <=0)
+            {
+                return;
+            }
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 this.pos += direccion * velocidad * elapsedTime;
+                this.currentFuel-=this.stats.fuelConsumption;
             }
             if (keyboardState.IsKeyDown(Keys.S))
             {
                 this.pos -= direccion * velocidad * elapsedTime;
             }
+            
+
         }
 
         public Matrix getCarWorld()
