@@ -192,12 +192,18 @@ public class TGCGame : Game
         };
 
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
-        var collectibleModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere"), 0.05f);
-        foreach (var mesh in collectibleModel.Model.Meshes)
+        var collectibleModelWrench = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Wrench/Monkey-Wrench"), 0.1f);
+        var collectibleModelFuel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Fuel/gascylinder"), 0.1f);
+        var collectibleModelCoin = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/gems_monogame/gem1"), 1f);
+        var collectibleModelObstacle = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere"), 0.05f);
+        foreach (var coll in new ModelInfo[] { collectibleModelWrench, collectibleModelCoin, collectibleModelFuel, collectibleModelObstacle })
         {
-            foreach (var meshPart in mesh.MeshParts)
+            foreach (var mesh in coll.Model.Meshes)
             {
-                meshPart.Effect = _effect;
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = _effect;
+                }
             }
         }
         //despues hay que pasarlo al roadspawnder
@@ -262,7 +268,18 @@ public class TGCGame : Game
 
         _prevKeyboard = keyboardState;
 
-        this.Window.Title = "Score: " + _vehiculoActual.score;
+
+        //_vehiculoActual.Update(gameTime, keyboardState, _carWorld.Forward);
+        
+        this.Window.Title = "Score: " + _vehiculoActual.score + " Fuel: " + _vehiculoActual.currentFuel + " Health: " + _vehiculoActual.currentHealth;
+        //Actualizo la matriz de mundo del _vehiculoActual con la rotacion respecto al eje Y 
+        // y con el vector3 de posicion, siguiendo la regla de SRT
+
+        //_carWorld = Matrix.CreateRotationY(carYaw) * Matrix.CreateTranslation(_carPosition);
+        //_carWorld = _vehiculoActual.getCarWorld();
+        // Actualizo la camara, enviandole la matriz de mundo del _vehiculoActual.
+        //_followCamera.Update(gameTime, _carWorld);
+        //_roadSpawner.Update(_carPosition);
         _roadSpawner.Update(_vehiculoActual.pos);
 
 

@@ -87,6 +87,13 @@ namespace TGC.MonoGame.TP
     {
         private readonly float hp;
         public WrenchCollectible(ModelInfo model, Vector3 pos, float amount) : base(model, pos) => hp = amount;
-        public override void apply(Vehiculo v) => v.currentHealth = Math.Min(v.currentFuel + hp, v.stats.maxHealth);
+        public override void apply(Vehiculo v) => v.currentHealth = Math.Min(v.currentHealth + hp, v.stats.maxHealth);
+    }
+
+    public class DamageCollectible : Collectible
+    {
+        private readonly float damage;
+        public DamageCollectible(ModelInfo model, Vector3 pos, float amount) : base(model, pos) => damage = amount;
+        public override void apply(Vehiculo v) => v.currentHealth = Math.Max(v.currentHealth - damage, 0);
     }
 }

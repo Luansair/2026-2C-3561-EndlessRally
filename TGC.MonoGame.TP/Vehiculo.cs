@@ -75,7 +75,15 @@ namespace TGC.MonoGame.TP
         public void Update(GameTime gameTime, KeyboardState keyboardState) {  
             float velocidad = this.stats.accel * 100f;
             float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
+            Vector3 direccion = this.getCarWorld().Forward;
+            if (keyboardState.IsKeyDown(Keys.Up))
+            {
+                this.pos += direccion * velocidad * elapsedTime;
+            }
+            if (keyboardState.IsKeyDown(Keys.Down))
+            {
+                this.pos -= direccion * velocidad * elapsedTime;
+            }
             if (keyboardState.IsKeyDown(Keys.A))
             {
                 this.carYaw += MathHelper.ToRadians(100f) * elapsedTime;
@@ -84,15 +92,21 @@ namespace TGC.MonoGame.TP
             {
                 this.carYaw -= MathHelper.ToRadians(100f) * elapsedTime;
             }
-            Vector3 direccion = this.getCarWorld().Forward;
+            if (currentFuel<= 0 || currentHealth <=0)
+            {
+                return;
+            }
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 this.pos += direccion * velocidad * elapsedTime;
+                this.currentFuel-=this.stats.fuelConsumption;
             }
             if (keyboardState.IsKeyDown(Keys.S))
             {
                 this.pos -= direccion * velocidad * elapsedTime;
             }
+            
+
         }
 
         public Matrix getCarWorld()
