@@ -46,7 +46,7 @@ namespace TGC.MonoGame.TP
         {
             foreach (Decoration decoration in _decorations)
             {
-                decoration.Draw(graphicsDevice, effect, view, projection);
+                decoration.Draw(effect, view, projection);
             }
         }
 

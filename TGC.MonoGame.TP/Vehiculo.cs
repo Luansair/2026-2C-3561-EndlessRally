@@ -100,26 +100,18 @@ namespace TGC.MonoGame.TP
             return Matrix.CreateScale(modelI.Scale) * Matrix.CreateRotationY(this.carYaw) * Matrix.CreateTranslation(this.pos);
         }
 
-        public void Draw(Effect effect, Matrix view, Matrix projection)
+        public void Draw(Effect effect, Matrix view, Matrix projection, Matrix? customWorld = null)
         {
-
-            Matrix carWorld = Matrix.CreateScale(modelI.Scale) *
-                      Matrix.CreateRotationY(carYaw) * // o la rotación/orientación que uses
-                      Matrix.CreateTranslation(pos);
+            Matrix carWorld = customWorld ?? getCarWorld();
 
             var model = modelI.Model;
             var boneTransforms = new Matrix[model.Bones.Count];
             model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
-            // Si tiene textura propia la usa y DiffuseColor en blanco; si no, textura blanca por defecto
-            Texture2D textureToUse = modelI.Texture ?? TGCGame.DefaultTexture;
-            Vector3 diffuseColor = modelI.Texture != null 
-                ? Color.White.ToVector3() 
-                : Color.White.ToVector3(); // O el color de carrocería que quieras si no tiene textura
+            effect.Parameters["baseTexture"]?.SetValue(TGCGame.DefaultTexture);
 
             foreach (var mesh in model.Meshes)
             {
-                // Matriz por hueso
                 Matrix meshWorld = boneTransforms[mesh.ParentBone.Index] * carWorld;
                 Matrix invTranspose = Matrix.Transpose(Matrix.Invert(meshWorld));
 
@@ -127,30 +119,37 @@ namespace TGC.MonoGame.TP
                 {
                     part.Effect = effect;
 
-                    effect.Parameters["World"].SetValue(meshWorld);
-                    effect.Parameters["View"].SetValue(view);
-                    effect.Parameters["Projection"].SetValue(projection);
-                    effect.Parameters["InverseTransposeWorld"].SetValue(invTranspose);
+                    effect.Parameters["World"]?.SetValue(meshWorld);
+                    effect.Parameters["View"]?.SetValue(view);
+                    effect.Parameters["Projection"]?.SetValue(projection);
+                    effect.Parameters["InverseTransposeWorld"]?.SetValue(invTranspose);
 
-                    // Si tenemos registrado el material de esta parte, lo aplicamos
+                    // Asignamos el color propio de esta parte específica
                     if (modelI.PartMaterials.TryGetValue(part, out var mat))
                     {
-                        if (mat.Texture != null)
-                        {
-                            // Tiene archivo de textura (ej. las casas o carteles)
-                            effect.Parameters["baseTexture"]?.SetValue(mat.Texture);
-                            effect.Parameters["DiffuseColor"].SetValue(Vector3.One);
-                        }
-                        else
-                        {
-                            // Es color de material plano (los autos y la pista)
-                            effect.Parameters["baseTexture"]?.SetValue(TGCGame.DefaultTexture);
-                            effect.Parameters["DiffuseColor"].SetValue(mat.DiffuseColor);
-                        }
+                        effect.Parameters["DiffuseColor"]?.SetValue(mat.DiffuseColor);
+                    }
+                    else
+                    {
+                        effect.Parameters["DiffuseColor"]?.SetValue(Color.White.ToVector3());
                     }
 
-                    mesh.Draw();
+                    // DIBUJAMOS ESTA PARTE ESPECÍFICA ANTES DE PASAR A LA SIGUIENTE
+                    foreach (var pass in effect.CurrentTechnique.Passes)
+                    {
+                        pass.Apply();
+
+                        effect.GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
+                        effect.GraphicsDevice.Indices = part.IndexBuffer;
+                        effect.GraphicsDevice.DrawIndexedPrimitives(
+                            PrimitiveType.TriangleList,
+                            part.VertexOffset,
+                            part.StartIndex,
+                            part.PrimitiveCount
+                        );
+                    }
                 }
+                // Ya no se llama a mesh.Draw() acá afuera, eso causaba que no cargue el color de cada parte
             }
         }
     }

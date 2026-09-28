@@ -118,8 +118,7 @@ public class TGCGame : Game
         _effect.Parameters["baseTexture"]?.SetValue(DefaultTexture);
         
         //les asignamos valores a los parametros de iluminacion
-        //_effect.Parameters["lightAmbientColor"]?.SetValue(new Vector3(0.55f, 0.58f, 0.65f));
-        _effect.Parameters["lightAmbientColor"]?.SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+        _effect.Parameters["lightAmbientColor"]?.SetValue(new Vector3(0.8f, 0.8f, 0.8f));
         _effect.Parameters["KAmbient"]?.SetValue(0.60f);
         
         _effect.Parameters["lightDiffuseColor"]?.SetValue(new Vector3(1.0f, 0.98f, 0.92f));
@@ -209,17 +208,6 @@ public class TGCGame : Game
         // Spawn a 400 unidades adelante (~20 a 30 piezas) y despawn a 200 unidades atrás
         _roadSpawner = new RoadSpawner(roadDefs, new Vector3(0f, 0.05f, 0f), 400f, 200f, decorationsFactory);
         base.LoadContent();
-    }
-
-    protected void ApplyShaderToModel(Model model, Effect effect)
-    {
-        foreach (var mesh in model.Meshes)
-        {
-            foreach (var meshPart in mesh.MeshParts)
-            {
-                meshPart.Effect = effect;
-            }
-        }
     }
 
     /// <summary>
@@ -314,7 +302,6 @@ public class TGCGame : Game
         GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
         GraphicsDevice.Clear(new Color(24, 26, 32));
-
         Vector3 menuCameraPos = new Vector3(0f, 6f, 18f);
         Matrix menuView = Matrix.CreateLookAt(menuCameraPos, new Vector3(0f, 1.5f, 0f), Vector3.Up);
         Matrix menuProj = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(50f), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
@@ -322,45 +309,28 @@ public class TGCGame : Game
         _effect.Parameters["View"]?.SetValue(menuView);
         _effect.Parameters["Projection"]?.SetValue(menuProj);
         
-        // Luz cenital para el showroom
         _effect.Parameters["lightPosition"]?.SetValue(new Vector3(10f, 25f, 15f));
         _effect.Parameters["eyePosition"]?.SetValue(menuCameraPos);
 
+        // Matriz del auto girando
         Matrix menuCarWorld = Matrix.CreateScale(_vehiculoActual.modelI.Scale * 1.5f)
                             * Matrix.CreateRotationY(_menuCarYaw)
                             * Matrix.CreateTranslation(Vector3.Zero);
 
-        var bones = new Matrix[_vehiculoActual.modelI.Model.Bones.Count];
-        _vehiculoActual.modelI.Model.CopyAbsoluteBoneTransformsTo(bones);
+        // Le delegamos el dibujo al vehículo pasándole su matriz del menú
+        _vehiculoActual.Draw(_effect, menuView, menuProj, menuCarWorld);
 
-        foreach (var mesh in _vehiculoActual.modelI.Model.Meshes)
-        {
-            Matrix meshWorld = bones[mesh.ParentBone.Index] * menuCarWorld;
-            Matrix invTranspose = Matrix.Transpose(Matrix.Invert(meshWorld));
-
-            foreach (var part in mesh.MeshParts)
-            {
-                part.Effect = _effect;
-                _effect.Parameters["World"]?.SetValue(meshWorld);
-                _effect.Parameters["InverseTransposeWorld"]?.SetValue(invTranspose);
-                _effect.Parameters["baseTexture"]?.SetValue(TGCGame.DefaultTexture);
-                _effect.Parameters["DiffuseColor"]?.SetValue(Color.White.ToVector3());
-            }
-            mesh.Draw();
-        }
         // Dibujar interfaz de usuario en 2D
         _spriteBatch.Begin();
-
         string titulo = "SELECCIONA TU VEHICULO";
         string nombreVehiculo = $"< {_vehiculoActual.Tipo} >";
         string statsTexto = $"Velocidad/Acel: {_vehiculoActual.stats.accel} | Giro: {_vehiculoActual.stats.turnSpeed} | Tanque: {_vehiculoActual.stats.maxFuel}";
-        string ayuda = "[FLECHAS] Cambiar _vehiculoActual    -    [ENTER] Empezar Carrera";
+        string ayuda = "[FLECHAS] Cambiar Vehiculo    -    [ENTER] Empezar Carrera";
 
         _spriteBatch.DrawString(_font, titulo, new Vector2(50, 40), Color.Gold);
         _spriteBatch.DrawString(_font, nombreVehiculo, new Vector2(50, 80), Color.White);
         _spriteBatch.DrawString(_font, statsTexto, new Vector2(50, 120), Color.LightGreen);
         _spriteBatch.DrawString(_font, ayuda, new Vector2(50, GraphicsDevice.Viewport.Height - 60), Color.LightGray);
-
         _spriteBatch.End();
     }
 
