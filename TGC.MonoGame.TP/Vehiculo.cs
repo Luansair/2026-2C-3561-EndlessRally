@@ -50,6 +50,8 @@ namespace TGC.MonoGame.TP
         public Vector3 pos;
         public int score;
         public float carYaw;
+        // Agarre segun la superficie (1 = asfalto). Lo actualiza TGCGame cada frame.
+        public float SurfaceGrip = 1f;
         public BoundingBox hitbox;
 
         public BoundingBox hitboxWorld => GizmoPrimitives.TransformAABB(hitbox, getCarWorld());
@@ -73,7 +75,7 @@ namespace TGC.MonoGame.TP
         //  Hay que aplicarle la logica del turnspeed el fuel etc
         //  Vector3 direccion = carworld.Foward
         public void Update(GameTime gameTime, KeyboardState keyboardState) {  
-            float velocidad = this.stats.accel * 100f;
+            float velocidad = this.stats.accel * 100f * SurfaceGrip;
             float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             Vector3 direccion = this.getCarWorld().Forward;
             if (keyboardState.IsKeyDown(Keys.Up))

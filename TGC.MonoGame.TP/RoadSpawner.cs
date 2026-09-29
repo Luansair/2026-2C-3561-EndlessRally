@@ -2,8 +2,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Runtime;
-using System.Xml.Schema;
 
 namespace TGC.MonoGame.TP
 {
@@ -38,6 +36,17 @@ namespace TGC.MonoGame.TP
         private readonly ModelInfo _wrenchModel;
         private readonly ModelInfo _obstacleModel;
         private int _segmentsSinceLastCollectible = 0;
+
+        // ---- Superficies (asfalto / tierra / nieve) ----
+        // Cantidad de chunks que dura el fundido entre dos superficies
+        private const int TransitionChunks = 6;
+        private const int MinZoneChunks = 15;
+        private const int MaxZoneChunks = 30;
+
+        private SurfaceType _currentSurface = SurfaceType.Asphalt;
+        private SurfaceType _nextSurface = SurfaceType.Asphalt;
+        private int _chunksLeftInZone = 20;   // la primera zona (asfalto) dura 20 chunks
+        private int _transitionLeft = 0;
         
 
         public RoadSpawner(
@@ -120,7 +129,8 @@ namespace TGC.MonoGame.TP
 
             var roadSegment = new RoadSegment(def.ModelInfo, world);
             var decorations = _decorationFactory.CreateFor(def, _chunksGenerados);
-            var chunk = new RoadChunk(_chunksGenerados, world, roadSegment, decorations);
+            SurfaceBlend surface = NextSurfaceBlend();
+            var chunk = new RoadChunk(_chunksGenerados, world, roadSegment, decorations, surface, def.offsetLocal.Z);
 
             colaSegmentos.Enqueue(chunk);
             _chunksGenerados++;
@@ -179,6 +189,61 @@ namespace TGC.MonoGame.TP
 
                 Collectibles.Add(nuevo);
             }
+        }
+
+        /// <summary>
+        ///     Decide la mezcla de superficies del proximo chunk: zona estable de N chunks
+        ///     y despues una transicion de TransitionChunks chunks hacia otra superficie.
+        /// </summary>
+        private SurfaceBlend NextSurfaceBlend()
+        {
+            if (_transitionLeft == 0)
+            {
+                if (_chunksLeftInZone-- > 0)
+                    return new SurfaceBlend(_currentSurface, _currentSurface, 0f, 0f);
+
+                // Arranca una transicion hacia una superficie distinta a la actual
+                do { _nextSurface = (SurfaceType)random.Next(3); }
+                while (_nextSurface == _currentSurface);
+
+                _transitionLeft = TransitionChunks;
+            }
+
+            float t0 = 1f - (float)_transitionLeft / TransitionChunks;
+            _transitionLeft--;
+            float t1 = 1f - (float)_transitionLeft / TransitionChunks;
+
+            var blend = new SurfaceBlend(_currentSurface, _nextSurface, t0, t1);
+
+            if (_transitionLeft == 0)
+            {
+                _currentSurface = _nextSurface;
+                _chunksLeftInZone = random.Next(MinZoneChunks, MaxZoneChunks + 1);
+            }
+
+            return blend;
+        }
+
+        /// <summary>
+        ///     Chunk mas cercano a una posicion (el que esta bajo el auto).
+        ///     GetCurrentSegment devuelve el mas VIEJO de la cola, no este.
+        /// </summary>
+        public RoadChunk GetChunkNear(Vector3 pos)
+        {
+            RoadChunk best = null;
+            float bestDist = float.MaxValue;
+
+            foreach (var chunk in colaSegmentos)
+            {
+                float d = Vector3.DistanceSquared(chunk.Position, pos);
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    best = chunk;
+                }
+            }
+
+            return best;
         }
 
         public RoadChunk GetCurrentSegment()

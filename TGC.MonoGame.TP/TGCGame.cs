@@ -64,6 +64,11 @@ public class TGCGame : Game
     private VertexPositionNormalTexture[] _floorVertices;
     private short[] _floorIndices;
 
+    // Ambiente actual (cielo, niebla, nieve, frio, piso). Se suaviza cada frame segun la superficie bajo el auto.
+    private const float SPAWN_DISTANCE = 400f;
+    private const float DESPAWN_DISTANCE = 600f;
+    private AtmosphereState _atmosphere = Atmosphere.Preset(SurfaceType.Asphalt);
+
     /// <summary>
     ///     Constructor del juego.
     /// </summary>
@@ -207,8 +212,8 @@ public class TGCGame : Game
         _roadSpawner = new RoadSpawner(
             roadDefs, 
             new Vector3(0f, 0.05f, 0f), 
-            400f, 
-            600f, 
+            SPAWN_DISTANCE, 
+            DESPAWN_DISTANCE, 
             decorationsFactory,
             collectibleModelCoin,
             collectibleModelFuel,
@@ -284,6 +289,19 @@ public class TGCGame : Game
         //_roadSpawner.Update(_carPosition);
         _roadSpawner.Update(_vehiculoActual.pos);
 
+        // Ambiente segun la superficie que hay bajo el auto (con suavizado para que no salte de chunk en chunk)
+        if (_enCarrera)
+        {
+            RoadChunk bajoElAuto = _roadSpawner.GetChunkNear(_vehiculoActual.pos);
+            if (bajoElAuto != null)
+            {
+                AtmosphereState objetivo = Atmosphere.Sample(bajoElAuto.Surface);
+                float suavizado = 1f - MathF.Exp(-3f * elapsedTime);
+                _atmosphere = Atmosphere.Lerp(_atmosphere, objetivo, suavizado);
+                _vehiculoActual.SurfaceGrip = _atmosphere.Friction;
+            }
+        }
+
 
         base.Update(gameTime);
     }
@@ -329,6 +347,8 @@ public class TGCGame : Game
         _effect.Parameters["Projection"]?.SetValue(menuProj);
         
         _effect.Parameters["lightPosition"]?.SetValue(new Vector3(10f, 25f, 15f));
+        _effect.Parameters["lightDiffuseColor"]?.SetValue(new Vector3(1.0f, 0.98f, 0.92f));
+        Atmosphere.Clear(_effect); // sin niebla, nieve ni frio en el menu
         _effect.Parameters["eyePosition"]?.SetValue(menuCameraPos);
 
         // Matriz del auto girando
@@ -360,7 +380,9 @@ public class TGCGame : Game
         GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
         GraphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
         
-        GraphicsDevice.Clear(new Color(110, 160, 230)); // Cielo azul
+        GraphicsDevice.Clear(new Color(_atmosphere.Sky)); // Cielo (cambia con la superficie)
+        Atmosphere.Apply(_effect, _atmosphere, SPAWN_DISTANCE);
+        _effect.Parameters["UseSurfaceBlend"]?.SetValue(0f);
         _effect.Parameters["View"].SetValue(_followCamera.View);
         _effect.Parameters["Projection"].SetValue(_followCamera.Projection);
         
@@ -369,6 +391,9 @@ public class TGCGame : Game
         DrawCustomFloor();
 
         _roadSpawner.Draw(_effect, _followCamera.View, _followCamera.Projection);
+
+        // El auto y los coleccionables se dibujan sin nieve acumulada encima
+        _effect.Parameters["SnowCover"]?.SetValue(0f);
         GizmoPrimitives.DrawBoundingBox(GraphicsDevice, _effect, _vehiculoActual.hitbox.Min, _vehiculoActual.hitbox.Max, _vehiculoActual.getCarWorld(), _followCamera.View, _followCamera.Projection, Microsoft.Xna.Framework.Color.Blue);
         _vehiculoActual.Draw(_effect, _followCamera.View, _followCamera.Projection);
 
@@ -408,7 +433,7 @@ public class TGCGame : Game
         _effect.Parameters["View"]?.SetValue(_followCamera.View);
         _effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
         _effect.Parameters["InverseTransposeWorld"]?.SetValue(invTransposeFloor);
-        _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.13f, 0.53f, 0.10f)); // Verde pasto
+        _effect.Parameters["DiffuseColor"]?.SetValue(_atmosphere.Ground); // Color del piso segun la superficie
         _effect.Parameters["baseTexture"]?.SetValue(DefaultTexture);
 
         foreach (var pass in _effect.CurrentTechnique.Passes)

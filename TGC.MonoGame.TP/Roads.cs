@@ -27,6 +27,10 @@ namespace TGC.MonoGame.TP
 
     public class RoadSegment
     {
+        // Indice de la parte del modelo que es la calzada (el resto son cordones).
+        // Si en tu FBX el asfalto no es la parte 0, cambialo aca.
+        private const int AsphaltPartIndex = 0;
+
         public ModelInfo ModelInfo { get; }
         public Matrix World { get; }
 
@@ -82,6 +86,9 @@ namespace TGC.MonoGame.TP
                     }
                     effect.Parameters["baseTexture"]?.SetValue(textureToUse);
                     effect.Parameters["DiffuseColor"]?.SetValue(partColor);
+
+                    // Solo la calzada usa la mezcla de superficies del shader
+                    effect.Parameters["UseSurfaceBlend"]?.SetValue(i == AsphaltPartIndex ? 1f : 0f);
 
                     // Dibujamos EXCLUSIVAMENTE esta parte geométrica
                     foreach (var pass in effect.CurrentTechnique.Passes)
