@@ -99,7 +99,7 @@ namespace TGC.MonoGame.TP
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 this.pos += direccion * velocidad * elapsedTime;
-                this.currentFuel-=this.stats.fuelConsumption;
+                this.currentFuel-=this.stats.fuelConsumption *0.01f;
             }
             if (keyboardState.IsKeyDown(Keys.S))
             {

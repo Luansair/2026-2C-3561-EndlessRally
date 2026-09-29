@@ -46,24 +46,54 @@ namespace TGC.MonoGame.TP
         }
         public abstract void apply(Vehiculo vehiculo);
 
-        public void Draw(Effect effect, Matrix view, Matrix projection,GameTime gameTime)
+        public void Draw(Effect effect, Matrix view, Matrix projection, GameTime gameTime)
         {
-            if (!Collected) {
-                Matrix world = Matrix.CreateScale(modelI.Scale) *
-                          Matrix.CreateRotationY((float)gameTime.ElapsedGameTime.TotalSeconds) *
-                          Matrix.CreateTranslation(pos);
+            if (Collected) return;
 
-                foreach (ModelMesh mesh in modelI.Model.Meshes)
+            float rotY = (float)gameTime.TotalGameTime.TotalSeconds * 3.0f;
+            Matrix world = Matrix.CreateScale(modelI.Scale) *
+                        Matrix.CreateRotationY(rotY) *
+                        Matrix.CreateTranslation(pos);
+
+            var boneTransforms = new Matrix[modelI.Model.Bones.Count];
+            modelI.Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+
+            effect.Parameters["baseTexture"]?.SetValue(TGCGame.DefaultTexture);
+
+            foreach (ModelMesh mesh in modelI.Model.Meshes)
+            {
+                Matrix meshWorld = boneTransforms[mesh.ParentBone.Index] * world;
+                Matrix invTranspose = Matrix.Transpose(Matrix.Invert(meshWorld));
+
+                foreach (ModelMeshPart part in mesh.MeshParts)
                 {
-                    foreach (ModelMeshPart part in mesh.MeshParts)
+                    part.Effect = effect;
+
+                    effect.Parameters["World"]?.SetValue(meshWorld);
+                    effect.Parameters["View"]?.SetValue(view);
+                    effect.Parameters["Projection"]?.SetValue(projection);
+                    effect.Parameters["InverseTransposeWorld"]?.SetValue(invTranspose);
+
+                    // COLOR DEL COLECCIONABLE:
+                    Vector3 diffuseColor = Vector3.One;
+                    if (modelI.PartMaterials.TryGetValue(part, out var mat) && mat.DiffuseColor != Vector3.Zero)
                     {
-                        part.Effect = effect;
-                        effect.Parameters["World"].SetValue(world);
-                        effect.Parameters["View"].SetValue(view);
-                        effect.Parameters["Projection"].SetValue(projection);
-                        effect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
+                        diffuseColor = mat.DiffuseColor;
                     }
-                    mesh.Draw();
+                    effect.Parameters["DiffuseColor"]?.SetValue(diffuseColor);
+
+                    foreach (var pass in effect.CurrentTechnique.Passes)
+                    {
+                        pass.Apply();
+                        effect.GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
+                        effect.GraphicsDevice.Indices = part.IndexBuffer;
+                        effect.GraphicsDevice.DrawIndexedPrimitives(
+                            PrimitiveType.TriangleList,
+                            part.VertexOffset,
+                            part.StartIndex,
+                            part.PrimitiveCount
+                        );
+                    }
                 }
             }
         }

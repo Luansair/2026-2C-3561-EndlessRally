@@ -96,10 +96,6 @@ public class TGCGame : Game
 
     RoadSpawner _roadSpawner;
 
-    //esto tiene que ir en el roadSpawner despues
-    List<Collectible> collectibles = new List<Collectible>();
-    
-    /// <summary>
     ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
     ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
     ///     que podemos pre calcular para nuestro juego.
@@ -192,10 +188,10 @@ public class TGCGame : Game
         };
 
         //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
-        var collectibleModelWrench = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Wrench/Monkey-Wrench"), 0.1f);
-        var collectibleModelFuel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Fuel/gascylinder"), 0.1f);
-        var collectibleModelCoin = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/gems_monogame/gem1"), 1f);
-        var collectibleModelObstacle = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere"), 0.05f);
+        var collectibleModelWrench = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Wrench/Monkey-Wrench"), 0.13f);
+        var collectibleModelFuel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Fuel/gascylinder"), 0.13f);
+        var collectibleModelCoin = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/gems_monogame/gem1"), 200f);
+        var collectibleModelObstacle = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere2"), 10f);
         foreach (var coll in new ModelInfo[] { collectibleModelWrench, collectibleModelCoin, collectibleModelFuel, collectibleModelObstacle })
         {
             foreach (var mesh in coll.Model.Meshes)
@@ -206,13 +202,19 @@ public class TGCGame : Game
                 }
             }
         }
-        //despues hay que pasarlo al roadspawnder
-        collectibles.Add(new FichaCollectible(collectibleModelWrench, new Vector3(0f, 0f, -150f), 10));
-        collectibles.Add(new FichaCollectible(collectibleModelFuel, new Vector3(50f, 0f, -150f), 10));
-        collectibles.Add(new FichaCollectible(collectibleModelCoin, new Vector3(-50f, 0f, -150f), 10));
 
         // Spawn a 400 unidades adelante (~20 a 30 piezas) y despawn a 200 unidades atrás
-        _roadSpawner = new RoadSpawner(roadDefs, new Vector3(0f, 0.05f, 0f), 400f, 200f, decorationsFactory);
+        _roadSpawner = new RoadSpawner(
+            roadDefs, 
+            new Vector3(0f, 0.05f, 0f), 
+            400f, 
+            600f, 
+            decorationsFactory,
+            collectibleModelCoin,
+            collectibleModelFuel,
+            collectibleModelWrench,
+            collectibleModelObstacle
+        );
         base.LoadContent();
     }
 
@@ -288,7 +290,7 @@ public class TGCGame : Game
 
     private void checkCollisions()
     {
-        foreach (Collectible coll in collectibles)
+        foreach (Collectible coll in _roadSpawner.Collectibles)
         {
             if (coll.Collected) continue;
             coll.tryCollect(_vehiculoActual);
@@ -372,13 +374,13 @@ public class TGCGame : Game
 
 
         //mandar a func en coll
-        foreach (Collectible coll in collectibles)
+        foreach (Collectible coll in _roadSpawner.Collectibles)
         {
             if (coll.Collected) continue;
             coll.Draw(_effect, _followCamera.View, _followCamera.Projection, gameTime);
+            
             var hitWorld = Matrix.CreateScale(coll.modelI.Scale) * Matrix.CreateTranslation(coll.pos);
-            GizmoPrimitives.DrawBoundingBox(GraphicsDevice, _effect, coll.hitbox.Min, coll.hitbox.Max, hitWorld, _followCamera.View, _followCamera.Projection, Microsoft.Xna.Framework.Color.Blue);
-
+            GizmoPrimitives.DrawBoundingBox(GraphicsDevice, _effect, coll.hitbox.Min, coll.hitbox.Max, hitWorld, _followCamera.View, _followCamera.Projection, Color.Blue);
         }
     }
 
