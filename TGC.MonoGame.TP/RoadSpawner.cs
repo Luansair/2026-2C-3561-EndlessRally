@@ -17,6 +17,7 @@ namespace TGC.MonoGame.TP
         private readonly Random random;
         // generador de decoraciones del camino
         private readonly DecorationAreaFactory _decorationFactory;
+        private CollectibleFactory _collectibleFactory;
         //distancia a la que spawnea camino
         private readonly float spawnDistance;
         private readonly float despawnDistance;
@@ -32,50 +33,37 @@ namespace TGC.MonoGame.TP
         //racha para sacar los repetidos
         private int sameRoadRacha;
         private int _chunksGenerados;
-        public List<Collectible> Collectibles { get; } = new List<Collectible>();
-        private readonly ModelInfo _coinModel;
-        private readonly ModelInfo _fuelModel;
-        private readonly ModelInfo _wrenchModel;
-        private readonly ModelInfo _obstacleModel;
+        public List<Collectible> collectibles { get; } = new List<Collectible>();
+        
         private int _segmentsSinceLastCollectible = 0;
         
 
         public RoadSpawner(
             Dictionary<RoadPieceType, RoadPiece> defs, 
-            Vector3 startPos, 
-            float spawnDistance, 
-            float despawnDistance, 
+            RoadSpawnerConfig spawnerConfig, 
             DecorationAreaFactory decorationFactory,
-            ModelInfo coinModel,
-            ModelInfo fuelModel,
-            ModelInfo wrenchModel,
-            ModelInfo obstacleModel)
+            CollectibleFactory collectibleFactory)
         {
             this.defs = defs;
             this.colaSegmentos = new Queue<RoadChunk>();
             this.random = new Random();
             this._decorationFactory = decorationFactory;
-            this.despawnDistance = despawnDistance;
-            this.spawnDistance = spawnDistance;
+            this.despawnDistance = spawnerConfig.DespawnDistance;
+            this.spawnDistance = spawnerConfig.SpawnDistance;
             this._chunksGenerados = 0;
 
-            // Guardamos los modelos
-            _coinModel = coinModel;
-            _fuelModel = fuelModel;
-            _wrenchModel = wrenchModel;
-            _obstacleModel = obstacleModel;
+            _collectibleFactory = collectibleFactory;
 
-            nextPos = startPos;
+            nextPos = spawnerConfig.StartPosition;
             nextRot = 0f;
             lastType = RoadPieceType.STRAIGHT;
             sameRoadRacha = 0;
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < spawnerConfig.InitialSegmentCount; i++)
             {
                 SpawnNext();
             }
         }
-
         public void Update(Vector3 carPosition)
         {
             // Generar hacia adelante si el auto se acerca al final
@@ -98,7 +86,7 @@ namespace TGC.MonoGame.TP
                 {
                     break; // Si la pieza más vieja aún está cerca del auto, no borramos nada
                 }
-                Collectibles.RemoveAll(c => c.Collected || Vector3.Distance(c.pos, carPosition) > despawnDistance);
+                collectibles.RemoveAll(c => c.Collected || Vector3.Distance(c.pos, carPosition) > despawnDistance);
             }
         }
 
@@ -165,19 +153,7 @@ namespace TGC.MonoGame.TP
                 Vector3 localPos = new Vector3(laneX, 1.0f, 5.0f);
                 Vector3 worldPos = Vector3.Transform(localPos, segmentWorld);
 
-                int roll = random.Next(100);
-                Collectible nuevo;
-
-                if (roll < 55) // 45% Moneda/Gema
-                    nuevo = new FichaCollectible(_coinModel, worldPos - new Vector3(0f,1f,0f), 10);
-                else if (roll < 70) // 25% Nafta
-                    nuevo = new FuelCollectible(_fuelModel, worldPos, 25f);
-                else if (roll < 85) // 15% Llave inglesa (Reparación)
-                    nuevo = new WrenchCollectible(_wrenchModel, worldPos, 20f);
-                else // 15% Obstáculo / Trampa
-                    nuevo = new DamageCollectible(_obstacleModel, worldPos - new Vector3(0f,1f,0f), 15f);
-
-                Collectibles.Add(nuevo);
+                collectibles.Add(_collectibleFactory.CreateRandom(worldPos, random));
             }
         }
 
@@ -209,4 +185,13 @@ namespace TGC.MonoGame.TP
             return random.Next(2) == 0 ? RoadPieceType.CORNERLARGE : RoadPieceType.CORNERLARGELEFT;
         }
     }
+}
+
+public sealed class RoadSpawnerConfig
+{
+    public Vector3 StartPosition { get; init; }
+    public float SpawnDistance { get; init; }
+    public float DespawnDistance { get; init; }
+    public int InitialSegmentCount { get; init; }
+
 }

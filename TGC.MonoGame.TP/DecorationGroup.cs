@@ -1,6 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace TGC.MonoGame.TP
@@ -9,18 +7,13 @@ namespace TGC.MonoGame.TP
     {
         public DecorationType Type { get; }
         public int Amount { get; }
-        private List<ModelInfo> _models;
+        private IReadOnlyList<ModelInfo> _models;
 
-        public DecorationGroup(DecorationType type, int amount, List<ModelInfo> models)
+        public DecorationGroup(DecorationType type, int amount, IReadOnlyList<ModelInfo> models)
         {
             this.Type = type;
             this.Amount = amount;
             this._models = models;
-        }
-
-        public void AddModel(ModelInfo model)
-        {
-            _models.Add(model);
         }
 
         public ModelInfo GetRandomModel(Random random)

@@ -3,8 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TGC.MonoGame.TP;
 
@@ -23,15 +21,12 @@ public class TGCGame : Game
     public const string ContentFolderTextures = "Textures/";
     
     private readonly GraphicsDeviceManager _graphics;
+    private GameAssets _assets;
 
     private Effect _effect;
-    private Model _treeModel;
-    private DecorationGroup _treesGroup;
-    private DecorationGroup _rocksGroup;
 
     // Una camara
     private FollowCamera _followCamera;
-
 
     private SpriteBatch _spriteBatch;
 
@@ -124,75 +119,31 @@ public class TGCGame : Game
         _effect.Parameters["KSpecular"]?.SetValue(0.20f);
         _effect.Parameters["shininess"]?.SetValue(18.0f);
 
-        _treeModel = Content.Load<Model>(ContentFolder3D + "Tree/Tree");
-        var houseModel = Content.Load<Model>(ContentFolder3D + "Building_Big");
-        var houseModelInfo = new ModelInfo(houseModel, 0.02f);
-        
-
-        var ligeroModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "raceCarWhiteV2"), 0.01f);
-        var medianoModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Kenney_Cars/hatchback-sportsV2"), 0.01f);
-        var pesadoModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Kenney_Cars/suvV2"), 0.01f);
+        var contentLoader = new GameContentLoader();
+        _assets = contentLoader.Load(Content, GraphicsDevice);
 
         Vector3 largada = new Vector3(0f, 0f, 0f);
 
-        _opcionesVehiculos.Add(new Vehiculo(TipoVehiculo.LIGERO, ligeroModel, largada, MathHelper.Pi));
-        _opcionesVehiculos.Add(new Vehiculo(TipoVehiculo.MEDIANO, medianoModel, largada, MathHelper.Pi));
-        _opcionesVehiculos.Add(new Vehiculo(TipoVehiculo.PESADO, pesadoModel, largada, MathHelper.Pi));
+        _opcionesVehiculos.Add(new Vehiculo(TipoVehiculo.LIGERO, _assets.Cars.LightCar, largada, MathHelper.Pi));
+        _opcionesVehiculos.Add(new Vehiculo(TipoVehiculo.MEDIANO, _assets.Cars.MediumCar, largada, MathHelper.Pi));
+        _opcionesVehiculos.Add(new Vehiculo(TipoVehiculo.PESADO, _assets.Cars.HeavyCar, largada, MathHelper.Pi));
 
         _vehiculoActual = _opcionesVehiculos[_indiceVehiculoSeleccionado];
 
-        var rockModel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock0"), 0.002f);
-        var rockModel1 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock1"), 0.003f);
-        var rockModel2 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock2"), 0.008f);
-        var rockModel3 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock3"), 0.008f);
-        var rockModel4 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock4"), 0.008f);
-        var rockModel5 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock5"), 0.008f);
-        var rockModel6 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock6"), 0.008f);
-        var rockModel7 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock7"), 0.008f);
-        var rockModel8 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock8"), 0.008f);
-        var rockModel9 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock9"), 0.008f);
-        var rockModel10 = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Stones/Rock10"), 0.008f);
-        
         _random = new Random(SEED);
 
-        _treesGroup = new DecorationGroup(DecorationType.Tree, 3, [new ModelInfo(_treeModel, 2.8f)]);
-        _rocksGroup = new DecorationGroup(DecorationType.Rock, 1, [rockModel1, rockModel2, rockModel3, rockModel4, rockModel5, rockModel6, rockModel7, rockModel8, rockModel9, rockModel10]);
+        var treesGroup = new DecorationGroup(DecorationType.Tree, 3, [_assets.Decorations.Tree]);
+        var rocksGroup = new DecorationGroup(DecorationType.Rock, 1, _assets.Decorations.Rocks);
+        var houseGroup = new DecorationGroup(DecorationType.House, 1, [_assets.Decorations.House]);
 
-        
-        
-        var houseGroup = new DecorationGroup(DecorationType.House, 1, [houseModelInfo]);
-        var natureRecipes = new List<DecorationGroup> { _treesGroup, _rocksGroup };
+        var natureRecipes = new List<DecorationGroup> { treesGroup, rocksGroup };
         var houseRecipes = new List<DecorationGroup> { houseGroup };
+
         var decorationsFactory = new DecorationAreaFactory(natureRecipes, houseRecipes);
+        var collectibleFactory = new CollectibleFactory(_assets.Collectibles);
+        var roadSpawnerFactory = new RoadSpawnerFactory(_assets.Roads, decorationsFactory, collectibleFactory);
 
-        //se cargan los modelos
-        var roadStraightModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraightV2");
-        var roadRampModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadRamp");
-        var roadCornerModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLargeV2");
-        var roadCornerLeftModel = Content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLargeLeft");
-        var straightInfo = new ModelInfo(roadStraightModel, 1f);
-        var rampInfo = new ModelInfo(roadRampModel, 1f);
-        var cornerInfo = new ModelInfo(roadCornerModel, 1f);
-        var cornerLeftInfo = new ModelInfo(roadCornerLeftModel, 1f);
-        //se define un dicc con Tipo de camino  y los modelo con sus datos (offset para la siguiente posisicion y si rota o no)
-        var roadDefs = new Dictionary<RoadPieceType, RoadPiece>
-        {
-            { RoadPieceType.STRAIGHT, new RoadPiece(straightInfo, new Vector3(0, 0, 10f), 0f) },
-            { RoadPieceType.RAMP, new RoadPiece(rampInfo, new Vector3(0, 0, 10f), 0f) },
-
-            // Curva derecha: offset real al centro del carril de salida (15, 0, 15)
-            { RoadPieceType.CORNERLARGE, new RoadPiece(cornerLeftInfo, new Vector3(15f, 0, 15f), MathHelper.PiOver2) },
-
-            // Curva izquierda: offset real (-15, 0, 15)
-            { RoadPieceType.CORNERLARGELEFT, new RoadPiece(cornerInfo, new Vector3(-15f, 0, 15f), -MathHelper.PiOver2) }
-        };
-
-        //se instancia con el diccionario, el inicio y la distancia de espawn y de "culling"
-        var collectibleModelWrench = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Wrench/Monkey-Wrench"), 0.13f);
-        var collectibleModelFuel = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Fuel/gascylinder"), 0.13f);
-        var collectibleModelCoin = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/gems_monogame/gem1"), 200f);
-        var collectibleModelObstacle = new ModelInfo(Content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere2"), 10f);
-        foreach (var coll in new ModelInfo[] { collectibleModelWrench, collectibleModelCoin, collectibleModelFuel, collectibleModelObstacle })
+        foreach (var coll in new ModelInfo[] { _assets.Collectibles.Wrench, _assets.Collectibles.Coin, _assets.Collectibles.Fuel, _assets.Collectibles.Obstacle })
         {
             foreach (var mesh in coll.Model.Meshes)
             {
@@ -202,19 +153,16 @@ public class TGCGame : Game
                 }
             }
         }
+        var spawnerConfig = new RoadSpawnerConfig
+        {
+            StartPosition = new Vector3(0f, 0.05f, 0f),
+            SpawnDistance = 800f,
+            DespawnDistance = 1600f,
+            InitialSegmentCount = 100
+        };
 
-        // Spawn a 400 unidades adelante (~20 a 30 piezas) y despawn a 200 unidades atrás
-        _roadSpawner = new RoadSpawner(
-            roadDefs, 
-            new Vector3(0f, 0.05f, 0f), 
-            400f, 
-            600f, 
-            decorationsFactory,
-            collectibleModelCoin,
-            collectibleModelFuel,
-            collectibleModelWrench,
-            collectibleModelObstacle
-        );
+        _roadSpawner = roadSpawnerFactory.Create(spawnerConfig);
+
         base.LoadContent();
     }
 
@@ -290,7 +238,7 @@ public class TGCGame : Game
 
     private void checkCollisions()
     {
-        foreach (Collectible coll in _roadSpawner.Collectibles)
+        foreach (Collectible coll in _roadSpawner.collectibles)
         {
             if (coll.Collected) continue;
             coll.tryCollect(_vehiculoActual);
@@ -374,7 +322,7 @@ public class TGCGame : Game
 
 
         //mandar a func en coll
-        foreach (Collectible coll in _roadSpawner.Collectibles)
+        foreach (Collectible coll in _roadSpawner.collectibles)
         {
             if (coll.Collected) continue;
             coll.Draw(_effect, _followCamera.View, _followCamera.Projection, gameTime);
