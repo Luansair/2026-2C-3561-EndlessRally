@@ -9,55 +9,35 @@ namespace TGC.MonoGame.TP
     internal class DecorationArea
     {
         private readonly Shape _shape;
-        private readonly List<Decoration> _decorations;
+        private readonly List<DecorationGroup> _recipes;
         private readonly Random _random;
 
         public DecorationArea(Shape shape, List<DecorationGroup> recipes, Random random)
         {
             _shape = shape;
             _random = random;
-            _decorations = new List<Decoration>();
-            
-            if (_shape == null)
-                return;
-
-            foreach (DecorationGroup recipe in recipes)
-            {
-                GenerateDecorations(recipe);
-            }
+            _recipes = recipes;
         }
 
-        private void GenerateDecorations(DecorationGroup recipe)
+        public List<Entity> Generate()
         {
-            for (int i = 0; i < recipe.Amount; i++)
-            {
-                ModelInfo model = recipe.GetRandomModel(_random);
-                Vector3 position = _shape.GetRandomPosition(_random);
-                float rotation = _random.NextSingle() * (float)Math.PI * 2;
-                float scale = 0.75f + _random.NextSingle() * 0.5f;
-                
-                Decoration decoration = new Decoration(model, recipe.Type, position, rotation, scale);
+            var result = new List<Entity>();
 
-                _decorations.Add(decoration);
-            }
-        }
+            if (_shape == null) return result;
 
-        public void Draw(GraphicsDevice graphicsDevice, Effect effect, Matrix view, Matrix projection)
-        {
-            foreach (Decoration decoration in _decorations)
+            foreach (var recipe in _recipes)
             {
-                decoration.Draw(effect, view, projection);
-            }
-        }
+                for (int i = 0; i < recipe.Amount; i++)
+                {
+                    ModelInfo model = recipe.GetRandomModel(_random);
+                    Vector3 position = _shape.GetRandomPosition(_random);
+                    float rotation = _random.NextSingle() * (float)Math.PI * 2;
+                    float scale = 0.75f + _random.NextSingle() * 0.5f;
 
-        public void DrawRelativeTo(Matrix parentWorld, Effect effect, Matrix view, Matrix projection)
-        {
-            if (_shape == null)
-            return;
-            foreach (Decoration decoration in _decorations)
-            {
-                decoration.DrawRelativeTo(parentWorld, effect, view, projection);
+                    result.Add(DecorationFactory.Create(model, recipe.Type, position, rotation, scale));
+                }
             }
+            return result;
         }
     }
 }
