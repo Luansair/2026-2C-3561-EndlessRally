@@ -1,29 +1,27 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
+using System.Collections.Generic;
 
 namespace TGC.MonoGame.TP
 {
     internal class RoadChunk
     {
-        private readonly int _index;
-        private readonly RoadSegment _road;
-        private readonly DecorationArea _decorations;
+        public Entity  Road { get; }
+        public List<Entity> Decorations { get; }
+        public SurfaceMaterial Surface { get; }
+        public Vector3 Position => Road.Transform.Position;
 
-        // Exponemos la posición para que el Spawner sepa dónde está
-        public Vector3 Position => _road.World.Translation;
-
-        public RoadChunk(int index, Matrix world, RoadSegment road, DecorationArea decorations)
+        public RoadChunk(Entity road, List<Entity> decorations, SurfaceMaterial surface)
         {
-            _index = index;
-            _road = road;
-            _decorations = decorations;
+            Road = road;
+            Decorations = decorations;
+            Surface = surface;
         }
 
         public void Draw(Effect effect, Matrix view, Matrix projection)
         {
-            _road.Draw(effect, view, projection);
-            _decorations.DrawRelativeTo(_road.World, effect, view, projection);
+            Road.Render.Draw(effect, view, projection, Road.Transform.World);
+            foreach (var d in Decorations) d.Render.Draw(effect, view, projection, d.Transform.World);
         }
     }
 }

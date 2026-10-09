@@ -33,26 +33,26 @@ namespace TGC.MonoGame.TP
         //racha para sacar los repetidos
         private int sameRoadRacha;
         private int _chunksGenerados;
-        public List<Collectible> collectibles { get; } = new List<Collectible>();
-        
         private int _segmentsSinceLastCollectible = 0;
-        
+        private World _world;
 
+        
         public RoadSpawner(
             Dictionary<RoadPieceType, RoadPiece> defs, 
             RoadSpawnerConfig spawnerConfig, 
             DecorationAreaFactory decorationFactory,
-            CollectibleFactory collectibleFactory)
+            CollectibleFactory collectibleFactory,
+            World world)
         {
             this.defs = defs;
             this.colaSegmentos = new Queue<RoadChunk>();
             this.random = new Random();
             this._decorationFactory = decorationFactory;
+            this._collectibleFactory = collectibleFactory;
+            this._world = world;
             this.despawnDistance = spawnerConfig.DespawnDistance;
             this.spawnDistance = spawnerConfig.SpawnDistance;
             this._chunksGenerados = 0;
-
-            _collectibleFactory = collectibleFactory;
 
             nextPos = spawnerConfig.StartPosition;
             nextRot = 0f;
@@ -106,12 +106,20 @@ namespace TGC.MonoGame.TP
             // Matriz de mundo de la pieza actual
             Matrix world = Matrix.CreateRotationY(nextRot) * Matrix.CreateTranslation(nextPos);
 
-            var roadSegment = new RoadSegment(def.ModelInfo, world);
-            var decorations = _decorationFactory.CreateFor(def, _chunksGenerados);
-            var chunk = new RoadChunk(_chunksGenerados, world, roadSegment, decorations);
+            var roadEntity = new Entity
+            {
+                Render = new RenderModel(def.ModelInfo) { FallbackColor = new Vector3(0.20f, 0.20f, 0.22f) },
+                Surface = SurfaceMaterial.Asphalt,
+                IsMovable = false
+            };
 
-            colaSegmentos.Enqueue(chunk);
-            _chunksGenerados++;
+            var decorationArea = _decorationFactory.CreateFor(def, _chunksGenerados);
+            var decorations = decorationArea.Generate();
+
+            var chunk = new RoadChunk(roadEntity, decorations, roadEntity.Surface);
+
+            _world.Add(roadEntity);
+            foreach (var d in decorations) _world.Add(d);
 
             TrySpawnCollectibleOnSegment(typeNow, world);
 

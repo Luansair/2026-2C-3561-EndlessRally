@@ -31,13 +31,14 @@ namespace TGC.MonoGame.TP
             };
         }
 
-        public RoadSpawner Create(RoadSpawnerConfig spawnerConfig)
+        public RoadSpawner Create(RoadSpawnerConfig spawnerConfig, World world)
         {
             return new RoadSpawner(
                 _roadDefs, 
                 spawnerConfig, 
                 _decorationsFactory, 
-                _collectibleFactory);
+                _collectibleFactory,
+                world);
         }
     }
 }
