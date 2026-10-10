@@ -3,6 +3,14 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using TGC.MonoGame.TP.src.Road;
+using TGC.MonoGame.TP.src.Assets;
+using TGC.MonoGame.TP.src.Core;
+using TGC.MonoGame.TP.src.Decorations;
+using TGC.MonoGame.TP.src.Menu;
+using TGC.MonoGame.TP.src.Rendering;
+using TGC.MonoGame.TP.src.Vehicles;
+using TGC.MonoGame.TP.src.Collectibles;
 
 namespace TGC.MonoGame.TP;
 
