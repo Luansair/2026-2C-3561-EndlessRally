@@ -44,9 +44,10 @@ public class TGCGame : Game
 
     private GameState _estadoActual = GameState.Menu;
 
-    private readonly List<Vehiculo> _opcionesVehiculos = new();
-    private Vehiculo _vehiculoActual;
-    private int _indiceVehiculoSeleccionado = 0;
+    private Entity _currentVehicle;
+    private PlayerController _player;
+    private World _world;
+    private VehicleCarrousel _vehicles;
     private bool _enCarrera = false;
     private KeyboardState _prevKeyboard;
 
@@ -98,7 +99,7 @@ public class TGCGame : Game
     
     protected override void LoadContent()
     {
-        // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
+        // Carga de cosas del menu supongo
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _font = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "DefaultFont");
 
@@ -106,30 +107,22 @@ public class TGCGame : Game
         DefaultTexture.SetData(new[] { Color.White });
         
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
-        _effect.Parameters["baseTexture"]?.SetValue(DefaultTexture);
-        
-        //les asignamos valores a los parametros de iluminacion
-        _effect.Parameters["lightAmbientColor"]?.SetValue(new Vector3(0.8f, 0.8f, 0.8f));
-        _effect.Parameters["KAmbient"]?.SetValue(0.60f);
-        
-        _effect.Parameters["lightDiffuseColor"]?.SetValue(new Vector3(1.0f, 0.98f, 0.92f));
-        _effect.Parameters["KDiffuse"]?.SetValue(0.70f);
-        
-        _effect.Parameters["lightSpecularColor"]?.SetValue(new Vector3(1.0f, 1.0f, 1.0f));
-        _effect.Parameters["KSpecular"]?.SetValue(0.20f);
-        _effect.Parameters["shininess"]?.SetValue(18.0f);
+        LightManager.ApplyDefaults(_effect);
 
+        // Carga de assets
         var contentLoader = new GameContentLoader();
         _assets = contentLoader.Load(Content, GraphicsDevice);
 
-        Vector3 largada = new Vector3(0f, 0f, 0f);
+        // Carga de opciones de vehiculos
+        var vehiclePresets = new VehiclePresets(_assets.Cars);
+        _vehicles = new VehicleCarrousel();
+        _vehicles.Add(vehiclePresets.Create(VehicleType.LightCar));
+        _vehicles.Add(vehiclePresets.Create(VehicleType.MediumCar));
+        _vehicles.Add(vehiclePresets.Create(VehicleType.HeavyCar));
 
-        _opcionesVehiculos.Add(new Vehiculo(TipoVehiculo.LIGERO, _assets.Cars.LightCar, largada, MathHelper.Pi));
-        _opcionesVehiculos.Add(new Vehiculo(TipoVehiculo.MEDIANO, _assets.Cars.MediumCar, largada, MathHelper.Pi));
-        _opcionesVehiculos.Add(new Vehiculo(TipoVehiculo.PESADO, _assets.Cars.HeavyCar, largada, MathHelper.Pi));
+        _currentVehicle = _vehicles.GetCurrent();
 
-        _vehiculoActual = _opcionesVehiculos[_indiceVehiculoSeleccionado];
-
+        // Configuracion de factories para crear entidades
         _random = new Random(SEED);
 
         var treesGroup = new DecorationGroup(DecorationType.Tree, 3, [_assets.Decorations.Tree]);
@@ -143,6 +136,7 @@ public class TGCGame : Game
         var collectibleFactory = new CollectibleFactory(_assets.Collectibles);
         var roadSpawnerFactory = new RoadSpawnerFactory(_assets.Roads, decorationsFactory, collectibleFactory);
 
+        // ??
         foreach (var coll in new ModelInfo[] { _assets.Collectibles.Wrench, _assets.Collectibles.Coin, _assets.Collectibles.Fuel, _assets.Collectibles.Obstacle })
         {
             foreach (var mesh in coll.Model.Meshes)
@@ -153,6 +147,9 @@ public class TGCGame : Game
                 }
             }
         }
+
+        // Creacion de mundo y road spawner
+        _world = new World();
         var spawnerConfig = new RoadSpawnerConfig
         {
             StartPosition = new Vector3(0f, 0.05f, 0f),
@@ -161,7 +158,7 @@ public class TGCGame : Game
             InitialSegmentCount = 100
         };
 
-        _roadSpawner = roadSpawnerFactory.Create(spawnerConfig);
+        _roadSpawner = roadSpawnerFactory.Create(spawnerConfig, _world);
 
         base.LoadContent();
     }
@@ -181,19 +178,18 @@ public class TGCGame : Game
             //Salgo del juego.
             Exit();
         }
+        // Menu de seleccion
         if (!_enCarrera)
         {
             _menuCarYaw += elapsedTime * 1.5f;
             // Cambiar de auto con flechas
             if (keyboardState.IsKeyDown(Keys.Right) && _prevKeyboard.IsKeyUp(Keys.Right))
             {
-                _indiceVehiculoSeleccionado = (_indiceVehiculoSeleccionado + 1) % _opcionesVehiculos.Count;
-                _vehiculoActual = _opcionesVehiculos[_indiceVehiculoSeleccionado];
+                _currentVehicle = _vehicles.GetNext();
             }
             if (keyboardState.IsKeyDown(Keys.Left) && _prevKeyboard.IsKeyUp(Keys.Left))
             {
-                _indiceVehiculoSeleccionado = (_indiceVehiculoSeleccionado - 1 + _opcionesVehiculos.Count) % _opcionesVehiculos.Count;
-                _vehiculoActual = _opcionesVehiculos[_indiceVehiculoSeleccionado];
+                _currentVehicle = _vehicles.GetPrev();
             }
 
             // comenzar
@@ -201,48 +197,32 @@ public class TGCGame : Game
             {
                 _enCarrera = true;
                 _estadoActual = GameState.Playing;
-                _followCamera.Update(gameTime, _vehiculoActual.getCarWorld());
+                _followCamera.Update(gameTime, _currentVehicle.Transform.World);
+
+                _player = new PlayerController(_currentVehicle);
+                _world.Add(_currentVehicle);
             }
         }
         else
         {
             Vector3 lightOffset = new Vector3(400f, 500f, 400f);
-            Vector3 lightPosition = _vehiculoActual.pos + lightOffset;
+            Vector3 lightPosition = _player.Vehicle.Transform.Position + lightOffset;
             _effect.Parameters["lightPosition"]?.SetValue(lightPosition);
             _effect.Parameters["eyePosition"]?.SetValue(_followCamera.Position);
+
             // Todo el movimiento se delega a la clase
-            _vehiculoActual.Update(gameTime, keyboardState);
-            _followCamera.Update(gameTime, _vehiculoActual.getCarWorld());
-            checkCollisions();
+            _player.Update(gameTime, keyboardState);
+            _followCamera.Update(gameTime, _player.Vehicle.Transform.World);
         }
 
         _prevKeyboard = keyboardState;
-
-
-        //_vehiculoActual.Update(gameTime, keyboardState, _carWorld.Forward);
         
-        this.Window.Title = "Score: " + _vehiculoActual.score + " Fuel: " + _vehiculoActual.currentFuel + " Health: " + _vehiculoActual.currentHealth;
-        //Actualizo la matriz de mundo del _vehiculoActual con la rotacion respecto al eje Y 
-        // y con el vector3 de posicion, siguiendo la regla de SRT
+        this.Window.Title = "Score: " + _player.Score + " Fuel: " + _player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current;
 
-        //_carWorld = Matrix.CreateRotationY(carYaw) * Matrix.CreateTranslation(_carPosition);
-        //_carWorld = _vehiculoActual.getCarWorld();
-        // Actualizo la camara, enviandole la matriz de mundo del _vehiculoActual.
-        //_followCamera.Update(gameTime, _carWorld);
-        //_roadSpawner.Update(_carPosition);
-        _roadSpawner.Update(_vehiculoActual.pos);
+        _roadSpawner.Update(_player.Vehicle.Transform.Position);
 
 
         base.Update(gameTime);
-    }
-
-    private void checkCollisions()
-    {
-        foreach (Collectible coll in _roadSpawner.collectibles)
-        {
-            if (coll.Collected) continue;
-            coll.tryCollect(_vehiculoActual);
-        }
     }
 
     protected override void Draw(GameTime gameTime)
@@ -280,22 +260,22 @@ public class TGCGame : Game
         _effect.Parameters["eyePosition"]?.SetValue(menuCameraPos);
 
         // Matriz del auto girando
-        Matrix menuCarWorld = Matrix.CreateScale(_vehiculoActual.modelI.Scale * 1.5f)
+        Matrix menuCarWorld = Matrix.CreateScale(_currentVehicle.Render.ModelInfo.Scale * 1.5f)
                             * Matrix.CreateRotationY(_menuCarYaw)
                             * Matrix.CreateTranslation(Vector3.Zero);
 
         // Le delegamos el dibujo al vehículo pasándole su matriz del menú
-        _vehiculoActual.Draw(_effect, menuView, menuProj, menuCarWorld);
+        _currentVehicle.Render.Draw(_effect, menuView, menuProj, menuCarWorld);
 
         // Dibujar interfaz de usuario en 2D
         _spriteBatch.Begin();
         string titulo = "SELECCIONA TU VEHICULO";
-        string nombreVehiculo = $"< {_vehiculoActual.Tipo} >";
-        string statsTexto = $"Velocidad/Acel: {_vehiculoActual.stats.accel} | Giro: {_vehiculoActual.stats.turnSpeed} | Tanque: {_vehiculoActual.stats.maxFuel}";
+        //string nombreVehiculo = $"< {_vehiculoActual.Tipo} >";
+        string statsTexto = $"Velocidad/Acel: {_currentVehicle.VehicleStats.Acceleration} | Giro: {_currentVehicle.VehicleStats.TurnSpeed} | Tanque: {_currentVehicle.Fuel.Max}";
         string ayuda = "[FLECHAS] Cambiar Vehiculo    -    [ENTER] Empezar Carrera";
 
         _spriteBatch.DrawString(_font, titulo, new Vector2(50, 40), Color.Gold);
-        _spriteBatch.DrawString(_font, nombreVehiculo, new Vector2(50, 80), Color.White);
+        //_spriteBatch.DrawString(_font, nombreVehiculo, new Vector2(50, 80), Color.White);
         _spriteBatch.DrawString(_font, statsTexto, new Vector2(50, 120), Color.LightGreen);
         _spriteBatch.DrawString(_font, ayuda, new Vector2(50, GraphicsDevice.Viewport.Height - 60), Color.LightGray);
         _spriteBatch.End();
@@ -316,20 +296,8 @@ public class TGCGame : Game
         //Dibujamos un piso
         DrawCustomFloor();
 
-        _roadSpawner.Draw(_effect, _followCamera.View, _followCamera.Projection);
-        GizmoPrimitives.DrawBoundingBox(GraphicsDevice, _effect, _vehiculoActual.hitbox.Min, _vehiculoActual.hitbox.Max, _vehiculoActual.getCarWorld(), _followCamera.View, _followCamera.Projection, Microsoft.Xna.Framework.Color.Blue);
-        _vehiculoActual.Draw(_effect, _followCamera.View, _followCamera.Projection);
-
-
-        //mandar a func en coll
-        foreach (Collectible coll in _roadSpawner.collectibles)
-        {
-            if (coll.Collected) continue;
-            coll.Draw(_effect, _followCamera.View, _followCamera.Projection, gameTime);
-            
-            var hitWorld = Matrix.CreateScale(coll.modelI.Scale) * Matrix.CreateTranslation(coll.pos);
-            GizmoPrimitives.DrawBoundingBox(GraphicsDevice, _effect, coll.hitbox.Min, coll.hitbox.Max, hitWorld, _followCamera.View, _followCamera.Projection, Color.Blue);
-        }
+        _world.Draw(_effect, _followCamera.View, _followCamera.Projection);  // Esto ya dibuja al auto tambien!
+ 
     }
 
     //Creamos geometria del piso 
@@ -370,7 +338,6 @@ public class TGCGame : Game
         }
     }
    
-
     /// <summary>
     ///     Libero los recursos que se cargaron en el juego.
     /// </summary>
