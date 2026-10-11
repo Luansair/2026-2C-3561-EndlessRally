@@ -2,11 +2,10 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Runtime;
-using System.Xml.Schema;
 using TGC.MonoGame.TP.src.Collectibles;
 using TGC.MonoGame.TP.src.Core;
 using TGC.MonoGame.TP.src.Decorations;
+using TGC.MonoGame.TP.src.Rendering;
 
 namespace TGC.MonoGame.TP.src.Road
 {
@@ -83,13 +82,13 @@ namespace TGC.MonoGame.TP.src.Road
                 // Si la distancia entre el auto y el chunk más viejo supera despawnDistance, recién ahí se elimina
                 if (Vector3.Distance(oldestChunk.Position, carPosition) > despawnDistance)
                 {
-                    colaSegmentos.Dequeue();
+                    var chunk = colaSegmentos.Dequeue();
+                    chunk.Road.Active = false;
                 }
                 else
                 {
                     break; // Si la pieza más vieja aún está cerca del auto, no borramos nada
                 }
-                collectibles.RemoveAll(c => c.Collected || Vector3.Distance(c.pos, carPosition) > despawnDistance);
             }
         }
 
@@ -120,8 +119,11 @@ namespace TGC.MonoGame.TP.src.Road
             var decorations = decorationArea.Generate();
 
             var chunk = new RoadChunk(roadEntity, decorations, roadEntity.Surface);
-
+            colaSegmentos.Enqueue(chunk);
             _world.Add(roadEntity);
+            roadEntity.Transform.Position = nextPos;
+            roadEntity.Transform.RotationY = nextRot;
+            roadEntity.Transform.Scale = def.ModelInfo.Scale;
             foreach (var d in decorations) _world.Add(d);
 
             TrySpawnCollectibleOnSegment(typeNow, world);
@@ -133,6 +135,8 @@ namespace TGC.MonoGame.TP.src.Road
             // Acumulamos el ángulo para las piezas que vienen después
             nextRot += def.rotacionY;
             nextRot = MathHelper.WrapAngle(nextRot);
+            
+            _chunksGenerados++;
 
             lastType = typeNow;
             
@@ -164,7 +168,7 @@ namespace TGC.MonoGame.TP.src.Road
                 Vector3 localPos = new Vector3(laneX, 1.0f, 5.0f);
                 Vector3 worldPos = Vector3.Transform(localPos, segmentWorld);
 
-                collectibles.Add(_collectibleFactory.CreateRandom(worldPos, random));
+                _world.Add(_collectibleFactory.CreateRandom(worldPos, random));
             }
         }
 

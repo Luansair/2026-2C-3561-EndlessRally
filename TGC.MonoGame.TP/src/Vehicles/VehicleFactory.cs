@@ -24,7 +24,7 @@ namespace TGC.MonoGame.TP.src.Vehicles
                 Active = true,
                 IsMovable = true
             };
-
+            vehicle.Transform.Scale = model.Scale;
             return vehicle;
         }
     }

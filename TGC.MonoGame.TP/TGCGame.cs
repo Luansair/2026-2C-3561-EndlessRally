@@ -221,14 +221,15 @@ public class TGCGame : Game
             // Todo el movimiento se delega a la clase
             _player.Update(gameTime, keyboardState);
             _followCamera.Update(gameTime, _player.Vehicle.Transform.World);
+
+            // Colisiones, coleccionables y despawn de entidades lejanas
+            _world.Update(gameTime, _player.Vehicle, _player);
+            _roadSpawner.Update(_player.Vehicle.Transform.Position);
+
+            this.Window.Title = "Score: " + _player.Score + " Fuel: " + _player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current;
         }
 
         _prevKeyboard = keyboardState;
-        
-        this.Window.Title = "Score: " + _player.Score + " Fuel: " + _player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current;
-
-        _roadSpawner.Update(_player.Vehicle.Transform.Position);
-
 
         base.Update(gameTime);
     }

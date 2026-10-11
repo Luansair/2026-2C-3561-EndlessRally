@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿// Codigo viejo: no se compila (define el simbolo LEGACY para reactivarlo).
+#if LEGACY
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -122,3 +124,4 @@ namespace TGC.MonoGame.TP.src.Legacy
 
 
 }
+#endif

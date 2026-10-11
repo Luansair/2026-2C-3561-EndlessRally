@@ -16,10 +16,34 @@ namespace TGC.MonoGame.TP.src.Core
 
         public void Update(GameTime gameTime, KeyboardState keyboard)
         {
+            //if(godmode) {CurrentHealth = 999;CurrentFuel = 999;}
+            if (CurrentHealth <= 0 || CurrentFuel <= 0)
+            {
+                return;
+            }
             var t = Vehicle.Transform;
             var direction = Vector3.Transform(Vector3.Forward, Matrix.CreateRotationY(t.RotationY));
-            float speed = Vehicle.VehicleStats.Acceleration * gameTime.GetElapsedSeconds();
-
+            float speed = Vehicle.VehicleStats.Acceleration * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (keyboard.IsKeyDown(Keys.W))
+            {
+                t.Position += direction * speed;
+                this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * (float)gameTime.ElapsedGameTime.TotalSeconds);
+            }
+            if (keyboard.IsKeyDown(Keys.S))
+            {
+                t.Position -= direction * speed;
+                this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * (float)gameTime.ElapsedGameTime.TotalSeconds);
+            }
+            if (keyboard.IsKeyDown(Keys.A))
+            {
+                t.RotationY += MathHelper.ToRadians(100f) * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            }
+            if (keyboard.IsKeyDown(Keys.D))
+            {
+                t.RotationY -= MathHelper.ToRadians(100f) * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            }
+            
+          
             // Manejo de inputs aca utilizando atributos de la entidad
         }
 
