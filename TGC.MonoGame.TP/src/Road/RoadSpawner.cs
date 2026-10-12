@@ -124,7 +124,13 @@ namespace TGC.MonoGame.TP.src.Road
             roadEntity.Transform.Position = nextPos;
             roadEntity.Transform.RotationY = nextRot;
             roadEntity.Transform.Scale = def.ModelInfo.Scale;
-            foreach (var d in decorations) _world.Add(d);
+            
+            foreach (var d in decorations)
+            {
+                d.Transform.Position = Vector3.Transform(d.Transform.Position, world);
+                d.Transform.RotationY += nextRot;
+                _world.Add(d);
+            }
 
             TrySpawnCollectibleOnSegment(typeNow, world);
 

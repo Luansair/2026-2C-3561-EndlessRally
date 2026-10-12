@@ -10,20 +10,23 @@ namespace TGC.MonoGame.TP.src.Assets
     public class ModelInfo
     {
         public Model Model { get; }
-        public float Scale { get; }
-        
+        public float Scale { get; set; }
+        public Matrix[] BoneTransforms { get; }
+
         // Mantenemos la propiedad Texture para no romper Decoration.cs ni RoadSegment.cs
         public Texture2D Texture { get; }
 
         // Diccionario para modelos con múltiples materiales (autos y pistas de Kenney)
         public Dictionary<ModelMeshPart, (Texture2D Texture, Vector3 DiffuseColor)> PartMaterials { get; } 
             = new Dictionary<ModelMeshPart, (Texture2D, Vector3)>();
-
+        private BoundingBox? _bounds;
+        public BoundingBox LocalBounds => _bounds ??= GizmoPrimitives.CreateAABBFrom(Model);
         public ModelInfo(Model model, float scale, Texture2D customTexture = null)
         {
             Model = model;
             Scale = scale;
-
+            BoneTransforms = new Matrix[model.Bones.Count];
+            model.CopyAbsoluteBoneTransformsTo(BoneTransforms);
             Texture2D firstDetectedTexture = customTexture;
 
             foreach (var mesh in model.Meshes)

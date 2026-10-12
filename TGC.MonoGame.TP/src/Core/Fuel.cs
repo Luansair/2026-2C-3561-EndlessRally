@@ -4,7 +4,7 @@ namespace TGC.MonoGame.TP.src.Core
 {
     internal class Fuel
     {
-        public float Current { get; private set; }
+        public float Current { get; set; }
         public float Max { get; }
         public Fuel(float max)
         {

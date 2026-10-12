@@ -162,7 +162,7 @@ public class TGCGame : Game
         {
             StartPosition = new Vector3(0f, 0.05f, 0f),
             SpawnDistance = 800f,
-            DespawnDistance = 1600f,
+            DespawnDistance = 800f,
             InitialSegmentCount = 100
         };
 

@@ -4,13 +4,27 @@ namespace TGC.MonoGame.TP.src.Core
 {
     internal class Transform
     {
-        public Vector3 Position;
-        public float RotationY;
-        public float Scale = 1.0f;
+        private Vector3 _position;
+        private float _rotationY;
+        private float _scale = 1.0f;
+        private Matrix _world;
+        private bool _dirty = true;
 
-        public Matrix World => 
-            Matrix.CreateScale(Scale) *
-            Matrix.CreateRotationY(RotationY) *
-            Matrix.CreateTranslation(Position);
+        public Vector3 Position { get => _position; set { _position = value; _dirty = true; } }
+        public float RotationY { get => _rotationY; set { _rotationY = value; _dirty = true; } }
+        public float Scale { get => _scale; set { _scale = value; _dirty = true; } }
+
+        public Matrix World
+        {
+            get
+            {
+                if (_dirty)
+                {
+                    _world = Matrix.CreateScale(_scale) * Matrix.CreateRotationY(_rotationY) * Matrix.CreateTranslation(_position);
+                    _dirty = false;
+                }
+                return _world;
+            }
+        }
     }
 }

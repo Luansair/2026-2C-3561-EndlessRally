@@ -17,7 +17,7 @@ namespace TGC.MonoGame.TP.src.Physics
             LocalBox = localBox;
         }
 
-        public static AABBShape FromModel(ModelInfo model) => new AABBShape(GizmoPrimitives.CreateAABBFrom(model.Model));
+        public static AABBShape FromModel(ModelInfo model) => new AABBShape(model.LocalBounds);
 
         private BoundingBox TransformAABB(BoundingBox box, Matrix world)
         {

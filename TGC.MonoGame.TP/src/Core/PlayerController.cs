@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System.Runtime.CompilerServices;
 using TGC.MonoGame.TP.src.Collectibles;
 
 namespace TGC.MonoGame.TP.src.Core
@@ -13,10 +14,11 @@ namespace TGC.MonoGame.TP.src.Core
 
         public float CurrentHealth => Vehicle.Damageable?.Current ?? 0f;
         public float CurrentFuel => Vehicle.Fuel?.Current ?? 0f;
-
+        private bool godmode = false;
         public void Update(GameTime gameTime, KeyboardState keyboard)
         {
-            //if(godmode) {CurrentHealth = 999;CurrentFuel = 999;}
+            if (keyboard.IsKeyDown(Keys.G)) godmode = !godmode;
+            if (godmode) { Vehicle.Damageable.Current = 999; Vehicle.Fuel.Current = 999;}
             if (CurrentHealth <= 0 || CurrentFuel <= 0)
             {
                 return;

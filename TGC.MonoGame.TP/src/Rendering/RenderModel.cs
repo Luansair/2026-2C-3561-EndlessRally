@@ -18,8 +18,7 @@ namespace TGC.MonoGame.TP.src.Rendering
         public void Draw(Effect effect, Matrix view, Matrix projection, Matrix world)
         {
             var model = ModelInfo.Model;
-            var boneTransforms = new Matrix[model.Bones.Count];
-            model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+            var boneTransforms = ModelInfo.BoneTransforms;
 
             foreach (var mesh in model.Meshes)
             {

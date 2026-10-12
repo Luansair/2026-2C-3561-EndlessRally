@@ -20,7 +20,7 @@ namespace TGC.MonoGame.TP.src.Core
             _collectibleSystem.Update(MovableEntities, playerEntity, playerTarget);
             _collectibleSystem.Update(StaticEntities, playerEntity,  playerTarget);
 
-            float despawnDist = 1600f;
+            float despawnDist = 800f;
             
             MovableEntities.RemoveAll(e => !e.Active || Vector3.Distance(e.Transform.Position, playerEntity.Transform.Position) > despawnDist);
             StaticEntities.RemoveAll(e => !e.Active || Vector3.Distance(e.Transform.Position, playerEntity.Transform.Position) > despawnDist);
@@ -28,12 +28,17 @@ namespace TGC.MonoGame.TP.src.Core
 
         public void Draw(Effect effect, Matrix view, Matrix proj)
         {
+            var frustum = new BoundingFrustum(view * proj);
             foreach (var e in MovableEntities)
             {
+                //!intersects continue
+                if (frustum.Contains(new BoundingSphere(e.Transform.Position, 30f)) == ContainmentType.Disjoint) continue;
                 if (e.Active) e.Draw(effect, view, proj);
             }
             foreach (var e in StaticEntities)
             {
+                //!intersects continue
+                if (frustum.Contains(new BoundingSphere(e.Transform.Position, 30f)) == ContainmentType.Disjoint) continue;
                 if (e.Active) e.Draw(effect, view, proj);
             }
         }
