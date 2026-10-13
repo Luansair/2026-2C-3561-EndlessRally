@@ -5,7 +5,7 @@ namespace TGC.MonoGame.TP.src.Core
     internal class Transform
     {
         private Vector3 _position;
-        private float _rotationY;
+        public float _rotationY;
         private float _scale = 1.0f;
         private Matrix _world;
         private bool _dirty = true;

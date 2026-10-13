@@ -19,9 +19,9 @@ namespace TGC.MonoGame.TP.src.Vehicles
 
         public Entity Create(VehicleType type) => type switch
         {
-            VehicleType.LightCar => VehicleFactory.Create(_assets.LightCar, 150, 150, 10, 100, 200),
-            VehicleType.MediumCar => VehicleFactory.Create(_assets.MediumCar, 250, 200, 15, 70, 120),
-            VehicleType.HeavyCar => VehicleFactory.Create(_assets.HeavyCar, 500, 300, 50, 30, 80),
+            VehicleType.LightCar => VehicleFactory.Create(_assets.LightCar, 150f, 150f, 10f, 100f, 200f),
+            VehicleType.MediumCar => VehicleFactory.Create(_assets.MediumCar, 250f, 200f, 15f, 70f, 150f),
+            VehicleType.HeavyCar => VehicleFactory.Create(_assets.HeavyCar, 500f, 300f, 50f, 40f, 120f),
             _ => null
         };
     }

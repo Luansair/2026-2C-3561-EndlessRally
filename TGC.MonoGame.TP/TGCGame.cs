@@ -129,7 +129,6 @@ public class TGCGame : Game
         _vehicles.Add(vehiclePresets.Create(VehicleType.HeavyCar));
 
         _currentVehicle = _vehicles.GetCurrent();
-
         // Configuracion de factories para crear entidades
         _random = new Random(SEED);
 
@@ -161,8 +160,8 @@ public class TGCGame : Game
         var spawnerConfig = new RoadSpawnerConfig
         {
             StartPosition = new Vector3(0f, 0.05f, 0f),
-            SpawnDistance = 800f,
-            DespawnDistance = 800f,
+            SpawnDistance = 400f,
+            DespawnDistance = 600f,
             InitialSegmentCount = 100
         };
 
@@ -205,6 +204,10 @@ public class TGCGame : Game
             {
                 _enCarrera = true;
                 _estadoActual = GameState.Playing;
+                //Giro la matriz de mundo del auto, y le aplico una escala para que sea mas acorde al camino
+                // si no hay que modificar la escala del camino
+                _currentVehicle.Transform.RotationY = MathHelper.ToRadians(180f);
+                _currentVehicle.Transform.Scale = 0.008f;
                 _followCamera.Update(gameTime, _currentVehicle.Transform.World);
 
                 _player = new PlayerController(_currentVehicle);

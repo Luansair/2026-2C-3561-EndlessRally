@@ -24,25 +24,29 @@ namespace TGC.MonoGame.TP.src.Core
                 return;
             }
             var t = Vehicle.Transform;
+
+            //Modificador de velocidad para que no salga super rapido el auto
+            float modificadorVelocidad = 0.23f;
+
             var direction = Vector3.Transform(Vector3.Forward, Matrix.CreateRotationY(t.RotationY));
-            float speed = Vehicle.VehicleStats.Acceleration * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            float speed = Vehicle.VehicleStats.Acceleration * modificadorVelocidad * (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (keyboard.IsKeyDown(Keys.W))
             {
                 t.Position += direction * speed;
-                this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * (float)gameTime.ElapsedGameTime.TotalSeconds);
+                this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * 0.01f * (float)gameTime.ElapsedGameTime.TotalSeconds);
             }
             if (keyboard.IsKeyDown(Keys.S))
             {
                 t.Position -= direction * speed;
-                this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * (float)gameTime.ElapsedGameTime.TotalSeconds);
+                this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * 0.01f * (float)gameTime.ElapsedGameTime.TotalSeconds);
             }
             if (keyboard.IsKeyDown(Keys.A))
             {
-                t.RotationY += MathHelper.ToRadians(100f) * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                t.RotationY += MathHelper.ToRadians(Vehicle.VehicleStats.TurnSpeed) * (float)gameTime.ElapsedGameTime.TotalSeconds;
             }
             if (keyboard.IsKeyDown(Keys.D))
             {
-                t.RotationY -= MathHelper.ToRadians(100f) * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                t.RotationY -= MathHelper.ToRadians(Vehicle.VehicleStats.TurnSpeed) * (float)gameTime.ElapsedGameTime.TotalSeconds;
             }
             
           
