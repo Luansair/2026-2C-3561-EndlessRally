@@ -11,6 +11,7 @@ namespace TGC.MonoGame.TP.src.Road
         public List<Entity> Decorations { get; }
         public SurfaceMaterial Surface { get; }
         public Vector3 Position => Road.Transform.Position;
+        public SurfaceBlend Blend => Road.Blend ?? default;
 
         public RoadChunk(Entity road, List<Entity> decorations, SurfaceMaterial surface)
         {

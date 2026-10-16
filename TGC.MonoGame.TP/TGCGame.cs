@@ -23,6 +23,9 @@ public class TGCGame : Game
 {
     public const string ContentFolder3D = "Models/";
     public const string ContentFolderEffects = "Effects/";
+    // Tambien define hasta donde llega la niebla (Atmosphere.Apply)
+    private const float SpawnDistance = 400f;
+    private const float DespawnDistance = 600f;
     public const string ContentFolderMusic = "Music/";
     public const string ContentFolderSounds = "Sounds/";
     public const string ContentFolderSpriteFonts = "SpriteFonts/";
@@ -32,6 +35,7 @@ public class TGCGame : Game
     private GameAssets _assets;
 
     private Effect _effect;
+    private AtmosphereState _atmosphere = Atmosphere.Preset(SurfaceType.Asphalt);
 
     // Una camara
     private FollowCamera _followCamera;
@@ -132,9 +136,9 @@ public class TGCGame : Game
         // Configuracion de factories para crear entidades
         _random = new Random(SEED);
 
-        var treesGroup = new DecorationGroup(DecorationType.Tree, 3, [_assets.Decorations.Tree]);
-        var rocksGroup = new DecorationGroup(DecorationType.Rock, 1, _assets.Decorations.Rocks);
-        var houseGroup = new DecorationGroup(DecorationType.House, 1, [_assets.Decorations.House]);
+        var treesGroup = new DecorationGroup(DecorationType.Tree, 10, [_assets.Decorations.Tree]);
+        var rocksGroup = new DecorationGroup(DecorationType.Rock, 15, _assets.Decorations.Rocks);
+        var houseGroup = new DecorationGroup(DecorationType.House, 13, [_assets.Decorations.House]);
 
         var natureRecipes = new List<DecorationGroup> { treesGroup, rocksGroup };
         var houseRecipes = new List<DecorationGroup> { houseGroup };
@@ -160,8 +164,8 @@ public class TGCGame : Game
         var spawnerConfig = new RoadSpawnerConfig
         {
             StartPosition = new Vector3(0f, 0.05f, 0f),
-            SpawnDistance = 400f,
-            DespawnDistance = 600f,
+            SpawnDistance = SpawnDistance,
+            DespawnDistance = DespawnDistance,
             InitialSegmentCount = 100
         };
 
@@ -185,6 +189,11 @@ public class TGCGame : Game
             //Salgo del juego.
             Exit();
         }
+        if (keyboardState.IsKeyDown(Keys.F1) && _prevKeyboard.IsKeyUp(Keys.F1))
+        {
+            _world.DebugBounds = !_world.DebugBounds;
+        }
+
         // Menu de seleccion
         if (!_enCarrera)
         {
@@ -229,6 +238,15 @@ public class TGCGame : Game
             _world.Update(gameTime, _player.Vehicle, _player);
             _roadSpawner.Update(_player.Vehicle.Transform.Position);
 
+            // Ambiente segun la superficie que hay bajo el auto (suavizado para que no salte de tramo en tramo)
+            RoadChunk bajoElAuto = _roadSpawner.GetChunkNear(_player.Vehicle.Transform.Position);
+            if (bajoElAuto != null)
+            {
+                AtmosphereState objetivo = Atmosphere.Sample(bajoElAuto.Blend);
+                float suavizado = 1f - MathF.Exp(-3f * elapsedTime);
+                _atmosphere = Atmosphere.Lerp(_atmosphere, objetivo, suavizado);
+            }
+
             this.Window.Title = "Score: " + _player.Score + " Fuel: " + _player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current;
         }
 
@@ -269,6 +287,8 @@ public class TGCGame : Game
         _effect.Parameters["Projection"]?.SetValue(menuProj);
         
         _effect.Parameters["lightPosition"]?.SetValue(new Vector3(10f, 25f, 15f));
+        _effect.Parameters["lightDiffuseColor"]?.SetValue(new Vector3(1.0f, 0.98f, 0.92f));
+        Atmosphere.Clear(_effect); // sin niebla, nieve ni frio en el menu
         _effect.Parameters["eyePosition"]?.SetValue(menuCameraPos);
 
         // Matriz del auto girando
@@ -300,7 +320,9 @@ public class TGCGame : Game
         GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
         GraphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
         
-        GraphicsDevice.Clear(new Color(110, 160, 230)); // Cielo azul
+        GraphicsDevice.Clear(new Color(_atmosphere.Sky)); // Cielo (cambia con la superficie)
+        Atmosphere.Apply(_effect, _atmosphere, SpawnDistance);
+        _effect.Parameters["UseSurfaceBlend"]?.SetValue(0f);
         _effect.Parameters["View"].SetValue(_followCamera.View);
         _effect.Parameters["Projection"].SetValue(_followCamera.Projection);
         
@@ -336,7 +358,7 @@ public class TGCGame : Game
         _effect.Parameters["View"]?.SetValue(_followCamera.View);
         _effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
         _effect.Parameters["InverseTransposeWorld"]?.SetValue(invTransposeFloor);
-        _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.13f, 0.53f, 0.10f)); // Verde pasto
+        _effect.Parameters["DiffuseColor"]?.SetValue(_atmosphere.Ground); // Color del piso segun la superficie
         _effect.Parameters["baseTexture"]?.SetValue(DefaultTexture);
 
         foreach (var pass in _effect.CurrentTechnique.Passes)

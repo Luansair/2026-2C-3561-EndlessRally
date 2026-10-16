@@ -36,6 +36,15 @@ namespace TGC.MonoGame.TP.src.Road
         private int sameRoadRacha;
         private int _chunksGenerados;
         private int _segmentsSinceLastCollectible = 0;
+
+        // Zonas de superficie (asfalto / tierra / nieve)
+        private const int TransitionChunks = 6;
+        private const int MinZoneChunks = 15;
+        private const int MaxZoneChunks = 30;
+        private SurfaceType _currentSurface = SurfaceType.Asphalt;
+        private SurfaceType _nextSurface = SurfaceType.Asphalt;
+        private int _chunksLeftInZone = 20;   // la primera zona (asfalto) dura 20 chunks
+        private int _transitionLeft = 0;
         private World _world;
 
         
@@ -61,7 +70,7 @@ namespace TGC.MonoGame.TP.src.Road
             lastType = RoadPieceType.STRAIGHT;
             sameRoadRacha = 0;
 
-            for (int i = 0; i < spawnerConfig.InitialSegmentCount; i++)
+            while (Vector3.Distance(nextPos, spawnerConfig.StartPosition) < spawnDistance && _chunksGenerados < 500)
             {
                 SpawnNext();
             }
@@ -100,6 +109,54 @@ namespace TGC.MonoGame.TP.src.Road
             }
         }
 
+        private SurfaceBlend NextSurfaceBlend()
+        {
+            if (_transitionLeft == 0)
+            {
+                if (_chunksLeftInZone-- > 0)
+                    return new SurfaceBlend(_currentSurface, _currentSurface, 0f, 0f);
+
+                // Arranca una transicion hacia una superficie distinta a la actual
+                do { _nextSurface = (SurfaceType)random.Next(3); }
+                while (_nextSurface == _currentSurface);
+
+                _transitionLeft = TransitionChunks;
+            }
+
+            float t0 = 1f - (float)_transitionLeft / TransitionChunks;
+            _transitionLeft--;
+            float t1 = 1f - (float)_transitionLeft / TransitionChunks;
+
+            var blend = new SurfaceBlend(_currentSurface, _nextSurface, t0, t1);
+
+            if (_transitionLeft == 0)
+            {
+                _currentSurface = _nextSurface;
+                _chunksLeftInZone = random.Next(MinZoneChunks, MaxZoneChunks + 1);
+            }
+
+            return blend;
+        }
+
+        // Tramo mas cercano a una posicion (para saber sobre que superficie esta el auto)
+        public RoadChunk GetChunkNear(Vector3 pos)
+        {
+            RoadChunk best = null;
+            float bestDist = float.MaxValue;
+
+            foreach (var chunk in colaSegmentos)
+            {
+                float d = Vector3.DistanceSquared(chunk.Position, pos);
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    best = chunk;
+                }
+            }
+
+            return best;
+        }
+
         private void SpawnNext()
         {
             RoadPieceType typeNow = nextType();
@@ -110,8 +167,10 @@ namespace TGC.MonoGame.TP.src.Road
 
             var roadEntity = new Entity
             {
-                Render = new RenderModel(def.ModelInfo) { FallbackColor = new Vector3(0.20f, 0.20f, 0.22f) },
+                Render = new RenderModel(def.ModelInfo) { FallbackColor = new Vector3(0.20f, 0.20f, 0.22f), SurfaceBlendPartIndex = 0 },
                 Surface = SurfaceMaterial.Asphalt,
+                Blend = NextSurfaceBlend(),
+                ChunkLength = def.offsetLocal.Z,
                 IsMovable = false
             };
 

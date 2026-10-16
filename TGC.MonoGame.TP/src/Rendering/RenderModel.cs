@@ -10,6 +10,9 @@ namespace TGC.MonoGame.TP.src.Rendering
         public Vector3 FallbackColor { get; set; } = Vector3.One;
         public Texture2D OverrideTexture { get; set; }
 
+        // Indice de la parte del modelo que usa la mezcla de superficies (-1 = ninguna)
+        public int SurfaceBlendPartIndex { get; set; } = -1;
+
         public RenderModel(ModelInfo modelInfo)
         {
             ModelInfo = modelInfo;
@@ -25,8 +28,9 @@ namespace TGC.MonoGame.TP.src.Rendering
                 var meshWorld = boneTransforms[mesh.ParentBone.Index] * world;
                 var invTranspose = Matrix.Transpose(Matrix.Invert(meshWorld));
 
-                foreach (var part in mesh.MeshParts)
+                for (int i = 0; i < mesh.MeshParts.Count; i++)
                 {
+                    var part = mesh.MeshParts[i];
                     part.Effect = effect;
                     effect.Parameters["World"]?.SetValue(meshWorld);
                     effect.Parameters["View"]?.SetValue(view);
@@ -44,6 +48,9 @@ namespace TGC.MonoGame.TP.src.Rendering
 
                     effect.Parameters["baseTexture"]?.SetValue(texture);
                     effect.Parameters["DiffuseColor"]?.SetValue(color);
+
+                    if (SurfaceBlendPartIndex >= 0)
+                        effect.Parameters["UseSurfaceBlend"]?.SetValue(i == SurfaceBlendPartIndex ? 1f : 0f);
 
                     foreach (var pass in effect.CurrentTechnique.Passes)
                     {

@@ -5,6 +5,7 @@ namespace TGC.MonoGame.TP.src.Physics
 {
     internal interface ICollisionShape
     {
+        public BoundingBox LocalBox { get; }
         bool Intersects(ICollisionShape other, Matrix worldA, Matrix worldB);
     }
     // Probably goes in a separate file.
@@ -42,6 +43,7 @@ namespace TGC.MonoGame.TP.src.Physics
 
     internal class NullShape : ICollisionShape
     {
+        public BoundingBox LocalBox { get; }
         public bool Intersects(ICollisionShape other, Matrix worldA, Matrix worldB) => false;
     }
 }

@@ -37,10 +37,10 @@ namespace TGC.MonoGame.TP.src.Assets
         
         private RoadAssets LoadRoads(ContentManager content, GraphicsDevice graphics)
         {
-            var roadStraightModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraightV2"), 1f);
-            var roadRampModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenny_races/roadRamp"), 1f);
-            var roadCornerModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLargeV2"), 1f);
-            var roadCornerLeftModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLargeLeft"), 1f);
+            var roadStraightModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenny_races/roadStraightV2"), 2.5f);
+            var roadRampModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenny_races/roadRamp"), 2.5f);
+            var roadCornerModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLargeV2"), 2.5f);
+            var roadCornerLeftModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenny_races/roadCornerLargeLeft"), 2.5f);
 
             return new RoadAssets
             {

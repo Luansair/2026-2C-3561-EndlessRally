@@ -7,11 +7,19 @@ using TGC.MonoGame.TP.src.Road;
 
 namespace TGC.MonoGame.TP.src.Decorations
 {
-    
+
     internal class DecorationAreaFactory
     {
         private readonly List<DecorationGroup> _natureRecipes; // Arboles y Rocas
         private readonly List<DecorationGroup> _houseRecipes;  // Casa
+
+        // Distancia lateral de la casa respecto al eje de la curva
+        // Donde empieza el area de casas, medido desde el eje del camino hacia afuera de la curva
+        private const float CurveHouseInnerDistance = 25f;
+        // Ancho del area hacia afuera (en X). El largo (Z) es el de la curva.
+        private const float CurveHouseAreaWidth = 70f;
+        // Distancia minima entre casas: subila si se tocan, bajala si querés mas casas
+        private const float CurveHouseMinSpacing = 12f;
 
         public DecorationAreaFactory(List<DecorationGroup> natureRecipes, List<DecorationGroup> houseRecipes)
         {
@@ -35,19 +43,21 @@ namespace TGC.MonoGame.TP.src.Decorations
                 // Si la curva dobla a la derecha (rotacionY > 0), el exterior está a la izquierda (-X)
                 // Si dobla a la izquierda (rotacionY < 0), el exterior está a la derecha (+X)
                 bool doblaDerecha = roadPiece.rotacionY > 0;
-                float posX = doblaDerecha ? -15f : 15f;
-                float posZ = 12f; // Mitad del avance de la curva
+                // La curva mide ~37.5 de radio (15 * escala 2.5), asi que la casa va bien afuera del asfalto
+                float centerX = CurveHouseInnerDistance + CurveHouseAreaWidth / 2f;
+                float posX = doblaDerecha ? -centerX : centerX;
+                float posZ = roadPiece.offsetLocal.Z / 2f; // Mitad del avance de la curva
 
-                // Área chica (2x2) donde caerá la casa
-                Shape houseShape = new RectangleShape(new Vector3(posX, 0f, posZ), 2f, 2f);
+                // Area donde caeran las casas (mas grande que antes para que no se apilen)
+                Shape houseShape = new RectangleShape(new Vector3(posX, 0f, posZ), CurveHouseAreaWidth, roadPiece.offsetLocal.Z);
 
-                return new DecorationArea(houseShape, _houseRecipes, random);
+                return new DecorationArea(houseShape, _houseRecipes, random, CurveHouseMinSpacing);
             }
 
             // 2. SI ES UNA RECTA: Bosque y rocas a los costados
             float roadHalfWidth = 5.0f;
-            float decorationMargin = 6.0f;
-            float outerHalfWidth = 55.0f;
+            float decorationMargin = 14.0f;   // antes 6: separacion minima entre el borde del camino y la primera decoracion
+            float outerHalfWidth = 90.0f;     // antes 55: hasta donde llegan las decoraciones
 
             float safeStart = roadHalfWidth + decorationMargin;
             float sideWidth = outerHalfWidth - safeStart;
