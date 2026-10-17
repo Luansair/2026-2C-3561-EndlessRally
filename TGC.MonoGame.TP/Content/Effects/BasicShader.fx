@@ -30,6 +30,7 @@ float KSpecular;
 float shininess;
 float3 lightPosition;
 float3 eyePosition; // Camera position
+bool Hud = false; // true = ignora DiffuseColor , false = toma DiffuseColor
 
 texture baseTexture;
 sampler2D textureSampler = sampler_state
@@ -67,6 +68,7 @@ struct VertexShaderInput
 	float4 Position : POSITION0;
     float4 Normal : NORMAL;
     float2 TextureCoordinates : TEXCOORD0;
+    float4 Color : COLOR0;
 };
 
 struct VertexShaderOutput
@@ -75,6 +77,7 @@ struct VertexShaderOutput
     float2 TextureCoordinates : TEXCOORD0;
     float4 WorldPosition : TEXCOORD1;
     float4 Normal : TEXCOORD2;
+    float4 VertexColor : COLOR0;
 };
 
 VertexShaderOutput MainVS(in VertexShaderInput input)
@@ -92,7 +95,7 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 	output.Normal = mul(input.Normal, InverseTransposeWorld);
 	
 	output.TextureCoordinates = input.TextureCoordinates;
-
+    output.VertexColor = input.Color;
     return output;
 }
 
@@ -120,7 +123,8 @@ float4 MainPS(VertexShaderOutput input) : COLOR
 
 	// Get the texture texel
     float4 texelColor = tex2D(textureSampler, input.TextureCoordinates);
-	float3 surfaceColor = texelColor.rgb * DiffuseColor;
+    float3 color = Hud ? input.VertexColor.rgb : DiffuseColor;
+	float3 surfaceColor = texelColor.rgb * color;
 
     // Mezcla de superficies a lo largo del tramo (solo la calzada: UseSurfaceBlend = 1)
     float along = saturate(dot(input.WorldPosition.xyz - ChunkOrigin, ChunkForward) / max(ChunkLength, 0.0001));

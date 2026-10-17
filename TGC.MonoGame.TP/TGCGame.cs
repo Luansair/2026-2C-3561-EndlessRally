@@ -35,6 +35,7 @@ public class TGCGame : Game
     private GameAssets _assets;
 
     private Effect _effect;
+    private Effect _hudEffect;
     private AtmosphereState _atmosphere = Atmosphere.Preset(SurfaceType.Asphalt);
 
     // Una camara
@@ -120,6 +121,9 @@ public class TGCGame : Game
         
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
         LightManager.ApplyDefaults(_effect);
+
+        _hudEffect = Content.Load<Effect>(ContentFolderEffects + "HudShader");
+        //LightManager.ApplyDefaults(_hudEffect);
 
         // Carga de assets
         var contentLoader = new GameContentLoader();
@@ -322,6 +326,7 @@ public class TGCGame : Game
         
         GraphicsDevice.Clear(new Color(_atmosphere.Sky)); // Cielo (cambia con la superficie)
         Atmosphere.Apply(_effect, _atmosphere, SpawnDistance);
+        _effect.Parameters["Hud"]?.SetValue(false);
         _effect.Parameters["UseSurfaceBlend"]?.SetValue(0f);
         _effect.Parameters["View"].SetValue(_followCamera.View);
         _effect.Parameters["Projection"].SetValue(_followCamera.Projection);
@@ -331,9 +336,22 @@ public class TGCGame : Game
         DrawCustomFloor();
 
         _world.Draw(_effect, _followCamera.View, _followCamera.Projection);  // Esto ya dibuja al auto tambien!
- 
+        DrawHud();
     }
+    private void DrawHud()
+    {
 
+        _hudEffect.Parameters["View"]?.SetValue(Matrix.Identity);
+        _hudEffect.Parameters["World"]?.SetValue(Matrix.Identity);
+        _hudEffect.Parameters["Projection"].SetValue(Matrix.Identity);
+
+        GraphicsDevice.DepthStencilState = DepthStencilState.None;
+        GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+
+        HUD.DrawScore(_hudEffect, GraphicsDevice, _player.Score);
+        HUD.DrawHealth(_hudEffect, GraphicsDevice, (int)_player.CurrentHealth);
+        HUD.DrawFuel(_hudEffect, GraphicsDevice, _player.Vehicle.Fuel.Current, _player.Vehicle.Fuel.Max);
+    }
     //Creamos geometria del piso 
     //(basicamente un cuadrado con 4 vertices, segun el tamaño que le pasemos, claramente van a ser dos triangulos grandes)
     private void CreateFloorGeometry(float size)

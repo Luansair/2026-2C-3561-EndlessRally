@@ -69,7 +69,7 @@ namespace TGC.MonoGame.TP.src.Core
                     slow = Math.Max(slow-0.06f,0f);
                 }
                 t.Position += direction * Math.Max(speed-slow, speed/2) * dificultad;
-                this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * DeltaTime);
+                this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * DeltaTime*50);
                 if (keyboard.IsKeyDown(Keys.A))
                 {
                     t.RotationY += MathHelper.ToRadians(Vehicle.VehicleStats.TurnSpeed) * DeltaTime;
