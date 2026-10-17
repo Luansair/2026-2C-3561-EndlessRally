@@ -65,6 +65,7 @@ public class TGCGame : Game
 
     //pantalla de menu
     private SpriteFont _font;
+    private HUD _hud;
     private float _menuCarYaw = 30f;
     public static Texture2D DefaultTexture { get; private set; }
 
@@ -114,6 +115,7 @@ public class TGCGame : Game
         // Carga de cosas del menu supongo
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _font = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "DefaultFont");
+        
 
         DefaultTexture = new Texture2D(GraphicsDevice, 1, 1);
         DefaultTexture.SetData(new[] { Color.White });
@@ -161,6 +163,7 @@ public class TGCGame : Game
 
         // Creacion de mundo y road spawner
         _world = new World();
+        _hud = new HUD(_font, DefaultTexture);
         var spawnerConfig = new RoadSpawnerConfig
         {
             StartPosition = new Vector3(0f, 0.05f, 0f),
@@ -247,7 +250,6 @@ public class TGCGame : Game
                 _atmosphere = Atmosphere.Lerp(_atmosphere, objetivo, suavizado);
             }
 
-            this.Window.Title = "Score: " + _player.Score + " Fuel: " + _player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current;
         }
 
         _prevKeyboard = keyboardState;
@@ -331,7 +333,16 @@ public class TGCGame : Game
         DrawCustomFloor();
 
         _world.Draw(_effect, _followCamera.View, _followCamera.Projection);  // Esto ya dibuja al auto tambien!
- 
+
+        _hud.Draw(
+            _spriteBatch,
+            _player.Score,
+            _player.Vehicle.Damageable.Current,
+            _player.Vehicle.Damageable.Max,
+            _player.Vehicle.Fuel.Current,
+            _player.Vehicle.Fuel.Max
+        );
+
     }
 
     //Creamos geometria del piso 

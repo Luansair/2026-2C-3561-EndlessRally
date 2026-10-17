@@ -19,6 +19,7 @@ namespace TGC.MonoGame.TP.src.Core
         public bool godmode = false;
         private float slow = 0f;
         private float dificultad = 0.71f;
+        private float modConsumoCombustible = 0.5f;
         private KeyboardState previousKeyboardState = Keyboard.GetState();
         private KeyboardState currentKeyboardState = Keyboard.GetState();
 
@@ -62,14 +63,14 @@ namespace TGC.MonoGame.TP.src.Core
                 dificultad += 0.01f * DeltaTime;
                 if (keyboard.IsKeyDown(Keys.S))
                 {
-                    slow += 0.06f;
+                    slow = Math.Min(slow + (2.0f * speed * DeltaTime), speed * 0.75f);
                 }
                 else
                 {
-                    slow = Math.Max(slow-0.06f,0f);
+                    slow = Math.Max(slow - (3.0f * speed * DeltaTime), 0f);
                 }
                 t.Position += direction * Math.Max(speed-slow, speed/2) * dificultad;
-                this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * DeltaTime);
+                this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * DeltaTime * modConsumoCombustible);
                 if (keyboard.IsKeyDown(Keys.A))
                 {
                     t.RotationY += MathHelper.ToRadians(Vehicle.VehicleStats.TurnSpeed) * DeltaTime;
