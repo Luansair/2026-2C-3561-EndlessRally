@@ -25,8 +25,8 @@ namespace TGC.MonoGame.TP.src.Assets
         private CarAssets LoadCars(ContentManager content, GraphicsDevice graphics)
         {
             var lightCarModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "raceCarWhiteV2"), 0.01f);
-            var mediumCarModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenney_Cars/hatchback-sportsV2"), 0.01f);
-            var heavyCarModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenney_Cars/suvV2"), 0.01f);
+            var mediumCarModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenney_Cars/hatchback-sportsV2"), 0.012f);
+            var heavyCarModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenney_Cars/suvV2"), 0.012f);
             return new CarAssets
             {
                 LightCar = lightCarModel,

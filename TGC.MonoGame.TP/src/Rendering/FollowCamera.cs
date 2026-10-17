@@ -9,8 +9,8 @@ namespace TGC.MonoGame.TP.src.Rendering;
 internal class FollowCamera
 {
     // Distancia hacia atrás y hacia arriba respecto al vehículo
-    private const float DistanceBack = 20f;
-    private const float DistanceUp = 5f;
+    private const float DistanceBack = 11f;
+    private const float DistanceUp = 6f;
 
     // Control de interpolación angular
     private const float AngleFollowSpeed = 2.5f; // Ajustado para que acompañe de forma natural
