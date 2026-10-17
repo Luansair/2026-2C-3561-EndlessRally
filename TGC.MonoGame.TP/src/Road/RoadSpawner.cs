@@ -83,7 +83,7 @@ namespace TGC.MonoGame.TP.src.Road
                 SpawnNext();
             }
 
-            // Despawn, SOLO borrar si la pieza más vieja quedó LEJOS del auto
+            // Despawn, borrar si la pieza más vieja quedó LEJOS del auto
             while (colaSegmentos.Count > 0)
             {
                 var oldestChunk = colaSegmentos.Peek();
@@ -157,6 +157,162 @@ namespace TGC.MonoGame.TP.src.Road
             return best;
         }
 
+        public RoadPieceType? GetRoadPieceAt(Vector3 position)
+        {
+            RoadChunk chunk = FindRoadChunkAt(position, out _);
+            return chunk?.Type;
+        }
+
+        public Func<float, Vector3> CreateTrafficPath(Vector3 position)
+        {
+            RoadChunk chunk = FindRoadChunkAt(position, out Vector3 localPosition);
+            if (chunk == null)
+                return null;
+
+            RoadPiece piece = defs[chunk.Type];
+            Func<float, Vector3> localPath = CreatePath(chunk.Type);
+            float distanceOnPiece = GetDistanceAlongPiece(piece, localPosition);
+            float currentParameter = -position.Z;
+            Matrix pieceWorld = Matrix.CreateRotationY(chunk.Road.Transform.RotationY)
+                              * Matrix.CreateTranslation(chunk.Road.Transform.Position);
+
+            return parameter =>
+            {
+                float distance = distanceOnPiece + parameter - currentParameter;
+                return Vector3.Transform(localPath(distance), pieceWorld);
+            };
+        }
+
+        private RoadChunk FindRoadChunkAt(Vector3 position, out Vector3 localPosition)
+        {
+            RoadChunk bestChunk = null;
+            localPosition = Vector3.Zero;
+            float bestDistanceSquared = float.MaxValue;
+
+            foreach (var chunk in colaSegmentos)
+            {
+                Matrix inversePieceWorld =
+                    Matrix.CreateTranslation(-chunk.Road.Transform.Position) *
+                    Matrix.CreateRotationY(-chunk.Road.Transform.RotationY);
+                Vector3 candidatePosition = Vector3.Transform(position, inversePieceWorld);
+                RoadPiece piece = defs[chunk.Type];
+                float distance = MathHelper.Clamp(
+                    GetDistanceAlongPiece(piece, candidatePosition),
+                    0f,
+                    GetPathLength(piece));
+                Vector3 centerline = CreatePath(chunk.Type)(distance);
+                float dx = candidatePosition.X - centerline.X;
+                float dz = candidatePosition.Z - centerline.Z;
+                float distanceSquared = dx * dx + dz * dz;
+
+                if (distanceSquared < bestDistanceSquared)
+                {
+                    bestChunk = chunk;
+                    localPosition = candidatePosition;
+                    bestDistanceSquared = distanceSquared;
+                }
+            }
+
+            const float roadHalfWidth = 5f;
+            return bestDistanceSquared <= roadHalfWidth * roadHalfWidth ? bestChunk : null;
+        }
+
+        public Func<float, Vector3> CreatePath(RoadPieceType tipo)
+        {   
+            var piece = defs[tipo];
+            return tipo switch
+            {
+                RoadPieceType.STRAIGHT => distance => StraightPath(piece, distance),
+                RoadPieceType.RAMP => distance => StraightPath(piece, distance),
+                RoadPieceType.CORNERLARGE => distance => CornerPath(piece, distance),
+                RoadPieceType.CORNERLARGELEFT => distance => CornerPath(piece, distance),
+                _ => throw new ArgumentOutOfRangeException(nameof(tipo), tipo, null)
+            };
+        }
+
+        private static float GetDistanceAlongPiece(RoadPiece piece, Vector3 position)
+        {
+            if (piece.Type == RoadPieceType.CORNERLARGE || piece.Type == RoadPieceType.CORNERLARGELEFT)
+            {
+                float horizontalX = MathF.Abs(piece.offsetLocal.X);
+                float horizontalZ = MathF.Abs(piece.offsetLocal.Z);
+                float radius = (horizontalX + horizontalZ) / 2f;
+                float direction = MathF.Sign(piece.offsetLocal.X);
+                if (horizontalX <= 0f || horizontalZ <= 0f || radius <= 0f)
+                    return 0f;
+
+                float cosine = 1f - direction * position.X / horizontalX;
+                float sine = position.Z / piece.offsetLocal.Z;
+                float angle = MathHelper.Clamp(MathF.Atan2(sine, cosine), 0f, MathHelper.PiOver2);
+                return angle * radius;
+            }
+
+            Vector3 forward = new Vector3(piece.offsetLocal.X, 0f, piece.offsetLocal.Z);
+            float length = forward.Length();
+            if (length <= 0f)
+                return 0f;
+
+            return Vector3.Dot(position, forward / length);
+        }
+
+        private static float GetPathLength(RoadPiece piece)
+        {
+            if (piece.Type == RoadPieceType.CORNERLARGE || piece.Type == RoadPieceType.CORNERLARGELEFT)
+            {
+                float radius = (MathF.Abs(piece.offsetLocal.X) + MathF.Abs(piece.offsetLocal.Z)) / 2f;
+                return radius * MathHelper.PiOver2;
+            }
+
+            return new Vector3(piece.offsetLocal.X, 0f, piece.offsetLocal.Z).Length();
+        }
+
+        private static Vector3 StraightPath(RoadPiece piece, float distance)
+        {
+            float length = new Vector3(piece.offsetLocal.X, 0f, piece.offsetLocal.Z).Length();
+            if (length <= 0f)
+                throw new System.InvalidOperationException("A road piece must have a non-zero offset.");
+
+            return new Vector3(piece.offsetLocal.X, 0f, piece.offsetLocal.Z) / length * distance;
+        }
+
+        private static Vector3 CornerPath(RoadPiece piece, float distance)
+        {
+            float direction = MathF.Sign(piece.offsetLocal.X);
+            if (direction == 0f)
+                direction = 1f;
+
+            float radius = (MathF.Abs(piece.offsetLocal.X) + MathF.Abs(piece.offsetLocal.Z)) / 2f;
+            if (radius <= 0f)
+                throw new System.InvalidOperationException("A corner piece must have a non-zero horizontal offset.");
+
+            float arcLength = radius * MathHelper.PiOver2;
+            float arcDistance = MathHelper.Clamp(distance, 0f, arcLength);
+            float angle = arcDistance / radius;
+            var pointOnArc = new Vector3(
+                direction * MathF.Abs(piece.offsetLocal.X) * (1f - MathF.Cos(angle)),
+                piece.offsetLocal.Y * arcDistance / arcLength,
+                piece.offsetLocal.Z * MathF.Sin(angle));
+
+            if (distance < 0f)
+            {
+                var entryDirection = new Vector3(
+                    0f,
+                    piece.offsetLocal.Y / arcLength,
+                    piece.offsetLocal.Z / radius);
+                return entryDirection * distance;
+            }
+
+            if (distance > arcLength)
+            {
+                var exitDirection = new Vector3(
+                    direction * MathF.Abs(piece.offsetLocal.X) / radius,
+                    piece.offsetLocal.Y / arcLength,
+                    0f);
+                return pointOnArc + exitDirection * (distance - arcLength);
+            }
+
+            return pointOnArc;
+        }
         private void SpawnNext()
         {
             RoadPieceType typeNow = nextType();
@@ -177,7 +333,7 @@ namespace TGC.MonoGame.TP.src.Road
             var decorationArea = _decorationFactory.CreateFor(def, _chunksGenerados);
             var decorations = decorationArea.Generate();
 
-            var chunk = new RoadChunk(roadEntity, decorations, roadEntity.Surface);
+            var chunk = new RoadChunk(roadEntity, decorations, roadEntity.Surface, typeNow);
             colaSegmentos.Enqueue(chunk);
             _world.Add(roadEntity);
             roadEntity.Transform.Position = nextPos;
@@ -242,6 +398,7 @@ namespace TGC.MonoGame.TP.src.Road
             if (colaSegmentos.Count == 0) return null;
             return colaSegmentos.Peek();
         }
+
         private RoadPieceType nextType()
         {
             // Obligar a que haya al menos 3 rectas entre curvas

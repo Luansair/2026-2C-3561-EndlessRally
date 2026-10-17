@@ -24,14 +24,14 @@ namespace TGC.MonoGame.TP.src.Road
 
             _roadDefs = new Dictionary<RoadPieceType, RoadPiece>
             {
-                { RoadPieceType.STRAIGHT, new RoadPiece(_roadAssets.RoadStraight, (new Vector3(0, 0, 10f))*_roadAssets.RoadStraight.Scale, 0f) },
-                { RoadPieceType.RAMP, new RoadPiece(_roadAssets.RoadRamp, (new Vector3(0, 0, 10f))*_roadAssets.RoadRamp.Scale, 0f) },
+                { RoadPieceType.STRAIGHT, new RoadPiece(_roadAssets.RoadStraight, (new Vector3(0, 0, 10f))*_roadAssets.RoadStraight.Scale, 0f, RoadPieceType.STRAIGHT) },
+                { RoadPieceType.RAMP, new RoadPiece(_roadAssets.RoadRamp, (new Vector3(0, 0, 10f))*_roadAssets.RoadRamp.Scale, 0f, RoadPieceType.RAMP) },
 
                 // Curva derecha: offset real al centro del carril de salida (15, 0, 15)
-                { RoadPieceType.CORNERLARGE, new RoadPiece(_roadAssets.RoadCornerLeft, (new Vector3(15f, 0, 15f))*_roadAssets.RoadCornerLeft.Scale, MathHelper.PiOver2) },
+                { RoadPieceType.CORNERLARGE, new RoadPiece(_roadAssets.RoadCornerLeft, (new Vector3(15f, 0, 15f))*_roadAssets.RoadCornerLeft.Scale, MathHelper.PiOver2, RoadPieceType.CORNERLARGE) },
 
                 // Curva izquierda: offset real (-15, 0, 15)
-                { RoadPieceType.CORNERLARGELEFT, new RoadPiece(_roadAssets.RoadCornerRight, (new Vector3(-15f, 0, 15f))*_roadAssets.RoadCornerRight.Scale, -MathHelper.PiOver2) }
+                { RoadPieceType.CORNERLARGELEFT, new RoadPiece(_roadAssets.RoadCornerRight, (new Vector3(-15f, 0, 15f))*_roadAssets.RoadCornerRight.Scale, -MathHelper.PiOver2, RoadPieceType.CORNERLARGELEFT) }
             };
         }
 

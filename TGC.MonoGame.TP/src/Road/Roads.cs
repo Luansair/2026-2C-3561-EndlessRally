@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TGC.MonoGame.TP.src.Assets;
@@ -17,13 +18,16 @@ namespace TGC.MonoGame.TP.src.Road
         public ModelInfo ModelInfo { get; }
         public Vector3 offsetLocal { get; }
         public float rotacionY { get; }
+        public RoadPieceType Type { get; }
 
-        public RoadPiece(ModelInfo modelInfo, Vector3 offsetLocal, float rotacionY)
+        public RoadPiece(ModelInfo modelInfo, Vector3 offsetLocal, float rotacionY, RoadPieceType type)
         {
             ModelInfo = modelInfo;
             this.offsetLocal = offsetLocal;
             this.rotacionY = rotacionY;
+            this.Type = type;
         }
+
     }
 
     public class RoadSegment

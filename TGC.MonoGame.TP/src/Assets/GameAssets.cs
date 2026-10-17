@@ -23,6 +23,7 @@ namespace TGC.MonoGame.TP.src.Assets
         public ModelInfo LightCar { get; init; }
         public ModelInfo MediumCar { get; init; }
         public ModelInfo HeavyCar { get; init; }
+        public ModelInfo Taxi { get; init; }
     }
 
     public sealed class RoadAssets

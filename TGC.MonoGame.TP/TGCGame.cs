@@ -59,6 +59,7 @@ public class TGCGame : Game
 
     private Entity _currentVehicle;
     private PlayerController _player;
+    private TrafficController _traffic;
     private World _world;
     private VehicleCarrousel _vehicles;
     private bool _enCarrera = false;
@@ -173,8 +174,7 @@ public class TGCGame : Game
             InitialSegmentCount = 100
         };
 
-        _roadSpawner = roadSpawnerFactory.Create(spawnerConfig, _world);
-
+        _roadSpawner = roadSpawnerFactory.Create(spawnerConfig, _world); //Prueba
         base.LoadContent();
     }
 
@@ -187,6 +187,7 @@ public class TGCGame : Game
     {
         float elapsedTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
         var keyboardState = Keyboard.GetState();
+        var vehiclePresets = new VehiclePresets(_assets.Cars);
 
         if (keyboardState.IsKeyDown(Keys.Escape))
         {
@@ -197,7 +198,7 @@ public class TGCGame : Game
         {
             _world.DebugBounds = !_world.DebugBounds;
         }
-
+        
         // Menu de seleccion
         if (!_enCarrera)
         {
@@ -224,7 +225,16 @@ public class TGCGame : Game
                 _followCamera.Update(gameTime, _currentVehicle.Transform.World);
 
                 _player = new PlayerController(_currentVehicle);
+                var traffic = new TrafficCar(vehiclePresets.Create(VehicleType.Taxi));
+                _traffic = new TrafficController(new List<TrafficCar> { traffic });
                 _world.Add(_currentVehicle);
+            
+                foreach (var trafficCar in _traffic.Vehicles)
+                { 
+                    trafficCar.Vehicle.Transform.RotationY = MathHelper.ToRadians(180f);
+                    trafficCar.Vehicle.Transform.Scale = 0.008f;
+                    _world.Add(trafficCar.Vehicle);
+                }
             }
         }
         else
@@ -241,6 +251,7 @@ public class TGCGame : Game
             // Colisiones, coleccionables y despawn de entidades lejanas
             _world.Update(gameTime, _player.Vehicle, _player);
             _roadSpawner.Update(_player.Vehicle.Transform.Position);
+            _traffic.Update(gameTime, _roadSpawner);
 
             // Ambiente segun la superficie que hay bajo el auto (suavizado para que no salte de tramo en tramo)
             RoadChunk bajoElAuto = _roadSpawner.GetChunkNear(_player.Vehicle.Transform.Position);
@@ -389,7 +400,7 @@ public class TGCGame : Game
             );
         }
     }
-   
+
     /// <summary>
     ///     Libero los recursos que se cargaron en el juego.
     /// </summary>

@@ -27,11 +27,13 @@ namespace TGC.MonoGame.TP.src.Assets
             var lightCarModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "raceCarWhiteV2"), 0.01f);
             var mediumCarModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenney_Cars/hatchback-sportsV2"), 0.01f);
             var heavyCarModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenney_Cars/suvV2"), 0.01f);
+            var taxi = new ModelInfo(content.Load<Model>(ContentFolder3D + "Kenney_Cars/taxi"), 0.01f);
             return new CarAssets
             {
                 LightCar = lightCarModel,
                 MediumCar = mediumCarModel,
-                HeavyCar = heavyCarModel
+                HeavyCar = heavyCarModel,
+                Taxi = taxi
             };
         }
         

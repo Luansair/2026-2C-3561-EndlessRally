@@ -3,13 +3,14 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using TGC.MonoGame.TP.src.Collectibles;
 using TGC.MonoGame.TP.src.Physics;
-
+using System.Linq;
 namespace TGC.MonoGame.TP.src.Core
 {
     internal class World
     {
         public List<Entity> MovableEntities { get; } = new();
         public List<Entity> StaticEntities { get; } = new();
+        //public List<Entity> TrafficEntities { get;} = new();
         // F1 en el juego: dibuja las bounding box de colision (gizmos)
         public bool DebugBounds { get; set; }
 
@@ -67,5 +68,6 @@ namespace TGC.MonoGame.TP.src.Core
             if (e.IsMovable) MovableEntities.Add(e);
             else StaticEntities.Add(e);
         }
-    }
+    
+}
 }

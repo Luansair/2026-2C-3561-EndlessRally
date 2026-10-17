@@ -9,15 +9,19 @@ namespace TGC.MonoGame.TP.src.Road
     {
         public Entity  Road { get; }
         public List<Entity> Decorations { get; }
+        public List<Entity> Cars { get; } 
         public SurfaceMaterial Surface { get; }
+        public RoadPieceType Type { get; }
         public Vector3 Position => Road.Transform.Position;
         public SurfaceBlend Blend => Road.Blend ?? default;
 
-        public RoadChunk(Entity road, List<Entity> decorations, SurfaceMaterial surface)
+        public RoadChunk(Entity road, List<Entity> decorations, SurfaceMaterial surface, RoadPieceType type, List<Entity> cars = null)
         {
             Road = road;
             Decorations = decorations;
             Surface = surface;
+            Type = type;
+            Cars = cars;
         }
 
         public void Draw(Effect effect, Matrix view, Matrix projection)
