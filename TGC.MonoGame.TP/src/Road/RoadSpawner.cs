@@ -47,6 +47,9 @@ namespace TGC.MonoGame.TP.src.Road
         private int _transitionLeft = 0;
         private World _world;
 
+        // Largo total (sobre el eje) del camino generado hasta ahora
+        private float _generatedDistance = 0f;
+
         
         public RoadSpawner(
             Dictionary<RoadPieceType, RoadPiece> defs, 
@@ -161,6 +164,70 @@ namespace TGC.MonoGame.TP.src.Road
         {
             RoadChunk chunk = FindRoadChunkAt(position, out _);
             return chunk?.Type;
+        }
+
+        // ---------------------------------------------------------------------------------
+        //  Trafico procedural: el camino como una curva parametrizada por distancia acumulada
+        // ---------------------------------------------------------------------------------
+
+        /// <summary>Distancia (sobre el eje) hasta el final del camino generado.</summary>
+        public float GeneratedDistance => _generatedDistance;
+
+        /// <summary>
+        ///     Distancia acumulada sobre el camino de una posicion del mundo. Si el auto se salio del
+        ///     camino usa el tramo mas cercano.
+        /// </summary>
+        public float GetDistanceAlongRoad(Vector3 position)
+        {
+            RoadChunk chunk = FindRoadChunkAt(position, out Vector3 localPosition);
+            if (chunk != null)
+            {
+                float onPiece = MathHelper.Clamp(GetDistanceAlongPiece(defs[chunk.Type], localPosition), 0f, chunk.Length);
+                return chunk.StartDistance + onPiece;
+            }
+
+            chunk = GetChunkNear(position);
+            return chunk != null ? chunk.StartDistance + chunk.Length * 0.5f : 0f;
+        }
+
+        /// <summary>
+        ///     Punto del eje del camino a cierta distancia acumulada, con su direccion de avance.
+        ///     Devuelve false si esa distancia ya se borro (atras) o todavia no se genero (adelante).
+        /// </summary>
+        public bool TrySampleRoad(float distance, out RoadSample sample)
+        {
+            foreach (var chunk in colaSegmentos)
+            {
+                float local = distance - chunk.StartDistance;
+                if (local < 0f) break;                  // los tramos estan ordenados: los que siguen estan mas adelante
+                if (local >= chunk.Length) continue;
+
+                RoadPiece piece = defs[chunk.Type];
+                Matrix rotation = Matrix.CreateRotationY(chunk.Road.Transform.RotationY);
+
+                Vector3 localPoint = EvaluatePath(piece, local);
+                Vector3 localTangent = EvaluatePath(piece, local + 0.5f) - EvaluatePath(piece, local - 0.5f);
+                localTangent.Y = 0f;
+                localTangent = localTangent.LengthSquared() > 1e-6f ? Vector3.Normalize(localTangent) : Vector3.UnitZ;
+
+                sample = new RoadSample
+                {
+                    Position = Vector3.Transform(localPoint, rotation) + chunk.Road.Transform.Position,
+                    Forward = Vector3.TransformNormal(localTangent, rotation),
+                    Type = chunk.Type
+                };
+                return true;
+            }
+
+            sample = default;
+            return false;
+        }
+
+        private static Vector3 EvaluatePath(RoadPiece piece, float distance)
+        {
+            return piece.Type == RoadPieceType.CORNERLARGE || piece.Type == RoadPieceType.CORNERLARGELEFT
+                ? CornerPath(piece, distance)
+                : StraightPath(piece, distance);
         }
 
         public Func<float, Vector3> CreateTrafficPath(Vector3 position)
@@ -334,6 +401,9 @@ namespace TGC.MonoGame.TP.src.Road
             var decorations = decorationArea.Generate();
 
             var chunk = new RoadChunk(roadEntity, decorations, roadEntity.Surface, typeNow);
+            chunk.StartDistance = _generatedDistance;
+            chunk.Length = GetPathLength(def);
+            _generatedDistance += chunk.Length;
             colaSegmentos.Enqueue(chunk);
             _world.Add(roadEntity);
             roadEntity.Transform.Position = nextPos;

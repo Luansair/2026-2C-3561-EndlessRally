@@ -225,16 +225,10 @@ public class TGCGame : Game
                 _followCamera.Update(gameTime, _currentVehicle.Transform.World);
 
                 _player = new PlayerController(_currentVehicle);
-                var traffic = new TrafficCar(vehiclePresets.Create(VehicleType.Taxi));
-                _traffic = new TrafficController(new List<TrafficCar> { traffic });
                 _world.Add(_currentVehicle);
-            
-                foreach (var trafficCar in _traffic.Vehicles)
-                { 
-                    trafficCar.Vehicle.Transform.RotationY = MathHelper.ToRadians(180f);
-                    trafficCar.Vehicle.Transform.Scale = 0.008f;
-                    _world.Add(trafficCar.Vehicle);
-                }
+
+                // Trafico procedural: aparece adelante del jugador (en niebla), circula por los carriles y se borra atras
+                _traffic = new TrafficController(vehiclePresets, _world, _currentVehicle, _roadSpawner);
             }
         }
         else
@@ -251,7 +245,7 @@ public class TGCGame : Game
             // Colisiones, coleccionables y despawn de entidades lejanas
             _world.Update(gameTime, _player.Vehicle, _player);
             _roadSpawner.Update(_player.Vehicle.Transform.Position);
-            _traffic.Update(gameTime, _roadSpawner);
+            _traffic.Update(gameTime, _player.CurrentSpeed);
 
             // Ambiente segun la superficie que hay bajo el auto (suavizado para que no salte de tramo en tramo)
             RoadChunk bajoElAuto = _roadSpawner.GetChunkNear(_player.Vehicle.Transform.Position);

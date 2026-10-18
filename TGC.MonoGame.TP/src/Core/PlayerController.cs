@@ -18,7 +18,12 @@ namespace TGC.MonoGame.TP.src.Core
         public float CurrentFuel => Vehicle.Fuel?.Current ?? 0f;
         public bool godmode = false;
         private float slow = 0f;
-        private float dificultad = 0.71f;
+        // Dificultad inicial (multiplica la velocidad). La usa el trafico para calcular su velocidad de referencia.
+        public const float InitialDifficulty = 0.71f;
+        private float dificultad = InitialDifficulty;
+
+        // Velocidad real del auto en unidades/segundo (la usa el trafico para ser relativo al jugador)
+        public float CurrentSpeed { get; private set; }
         private float modifConsumoComb = 0.5f;
         private KeyboardState previousKeyboardState = Keyboard.GetState();
         private KeyboardState currentKeyboardState = Keyboard.GetState();
@@ -29,6 +34,7 @@ namespace TGC.MonoGame.TP.src.Core
             float DeltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             //Modificador de velocidad para que no salga super rapido el auto
             var t = Vehicle.Transform;
+            Vector3 startPosition = t.Position;
             var direction = Vector3.Transform(Vector3.Forward, Matrix.CreateRotationY(t.RotationY));
             float speed = Vehicle.VehicleStats.Acceleration * DeltaTime;
 
@@ -58,7 +64,7 @@ namespace TGC.MonoGame.TP.src.Core
             }
             else
             {
-                if (CurrentHealth <= 0 || CurrentFuel <= 0) { return; }
+                if (CurrentHealth <= 0 || CurrentFuel <= 0) { CurrentSpeed = 0f; return; }
 
                 dificultad += 0.01f * DeltaTime;
                 if (keyboard.IsKeyDown(Keys.S))
@@ -80,6 +86,8 @@ namespace TGC.MonoGame.TP.src.Core
                     t.RotationY -= MathHelper.ToRadians(Vehicle.VehicleStats.TurnSpeed) * DeltaTime ;
                 }
             }
+
+            CurrentSpeed = DeltaTime > 0f ? Vector3.Distance(startPosition, t.Position) / DeltaTime : 0f;
 
             // Manejo de inputs aca utilizando atributos de la entidad
         }

@@ -15,6 +15,11 @@ namespace TGC.MonoGame.TP.src.Road
         public Vector3 Position => Road.Transform.Position;
         public SurfaceBlend Blend => Road.Blend ?? default;
 
+        // Distancia acumulada (a lo largo del eje del camino) donde empieza este tramo y su largo.
+        // Con esto cualquier auto puede ubicarse con un unico numero: "distancia recorrida".
+        public float StartDistance { get; set; }
+        public float Length { get; set; }
+
         public RoadChunk(Entity road, List<Entity> decorations, SurfaceMaterial surface, RoadPieceType type, List<Entity> cars = null)
         {
             Road = road;
