@@ -11,6 +11,7 @@ using TGC.MonoGame.TP.src.Menu;
 using TGC.MonoGame.TP.src.Rendering;
 using TGC.MonoGame.TP.src.Vehicles;
 using TGC.MonoGame.TP.src.Collectibles;
+using Microsoft.Xna.Framework.Audio;
 
 namespace TGC.MonoGame.TP;
 
@@ -35,6 +36,10 @@ public class TGCGame : Game
     private GameAssets _assets;
 
     private Effect _effect;
+    private SoundEffect _soundEffectMotor;
+    private SoundEffect _soundEffectLose;
+    private SoundEffect _soundEffectHit;
+    private SoundEffectInstance _soundEffectInstance;
     private Effect _hudEffect;
     private AtmosphereState _atmosphere = Atmosphere.Preset(SurfaceType.Asphalt);
 
@@ -52,7 +57,8 @@ public class TGCGame : Game
     {
         Menu,
         Playing,
-        Paused
+        Paused,
+        Lose
     }
 
     private GameState _estadoActual = GameState.Menu;
@@ -175,6 +181,12 @@ public class TGCGame : Game
         };
 
         _roadSpawner = roadSpawnerFactory.Create(spawnerConfig, _world); //Prueba
+
+        _soundEffectMotor = Content.Load<SoundEffect>(ContentFolderSounds + "motor");
+        _soundEffectLose = Content.Load<SoundEffect>(ContentFolderSounds + "lose");
+        _soundEffectHit = Content.Load<SoundEffect>(ContentFolderSounds + "hit");
+        _soundEffectInstance = _soundEffectMotor.CreateInstance();
+        _soundEffectInstance.IsLooped = true;
         base.LoadContent();
     }
 
@@ -224,11 +236,11 @@ public class TGCGame : Game
                 _currentVehicle.Transform.Scale = 0.008f;
                 _followCamera.Update(gameTime, _currentVehicle.Transform.World);
 
-                _player = new PlayerController(_currentVehicle);
+                _player = new PlayerController(_currentVehicle,_soundEffectLose);
                 _world.Add(_currentVehicle);
 
                 // Trafico procedural: aparece adelante del jugador (en niebla), circula por los carriles y se borra atras
-                _traffic = new TrafficController(vehiclePresets, _world, _currentVehicle, _roadSpawner);
+                _traffic = new TrafficController(vehiclePresets, _world, _currentVehicle, _roadSpawner,sfx: _soundEffectHit);
             }
         }
         else
@@ -239,7 +251,7 @@ public class TGCGame : Game
             _effect.Parameters["eyePosition"]?.SetValue(_followCamera.Position);
 
             // Todo el movimiento se delega a la clase
-            _player.Update(gameTime, keyboardState);
+            _player.Update(gameTime, keyboardState); 
             _followCamera.Update(gameTime, _player.Vehicle.Transform.World);
 
             // Colisiones, coleccionables y despawn de entidades lejanas
@@ -257,6 +269,14 @@ public class TGCGame : Game
             }
 
             this.Window.Title = "Score: " + _player.Score + " Fuel: " + _player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current;
+            if (!_player.IsDead) //podria pasarlo al controller como el de lose
+            {
+                _soundEffectInstance.Play();
+            }
+            else
+            {
+                _soundEffectInstance.Stop();
+            }
         }
 
         _prevKeyboard = keyboardState;

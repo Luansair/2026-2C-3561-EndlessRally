@@ -1,7 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using TGC.MonoGame.TP.src.Collectibles;
 
@@ -11,9 +13,12 @@ namespace TGC.MonoGame.TP.src.Core
     {
         public Entity Vehicle { get; }
         public int Score { get; private set; }
-
-        public PlayerController(Entity vehicle) { Vehicle = vehicle; }
-
+        public SoundEffect _sfxLose;
+        public PlayerController(Entity vehicle, SoundEffect sfx) { 
+            Vehicle = vehicle;
+            _sfxLose = sfx;
+        }
+        public bool IsDead = false;
         public float CurrentHealth => Vehicle.Damageable?.Current ?? 0f;
         public float CurrentFuel => Vehicle.Fuel?.Current ?? 0f;
         public bool godmode = false;
@@ -64,7 +69,13 @@ namespace TGC.MonoGame.TP.src.Core
             }
             else
             {
-                if (CurrentHealth <= 0 || CurrentFuel <= 0) { CurrentSpeed = 0f; return; }
+                if (IsDead) return;   
+
+                if (CurrentHealth <= 0 || CurrentFuel <= 0) { 
+                    CurrentSpeed = 0f;
+                    IsDead = true;
+                    _sfxLose.Play(); 
+                }
 
                 dificultad += 0.01f * DeltaTime;
                 if (keyboard.IsKeyDown(Keys.S))

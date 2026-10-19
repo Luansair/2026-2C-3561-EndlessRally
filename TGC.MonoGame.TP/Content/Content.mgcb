@@ -2767,6 +2767,114 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/Tree/Tree.fbx
 
+#begin Sounds/Boom.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Boom.wav;Models/Coleccionables/Boom
+
+#begin Sounds/Boom.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Boom.wav;Models/Coleccionables/Boom
+
+#begin Sounds/Boom.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Boom.wav
+
+#begin Sounds/crash.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/crash.wav;Models/Coleccionables/crash
+
+#begin Sounds/crash.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/crash.wav;Models/Coleccionables/crash
+
+#begin Sounds/crash.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/crash.wav;Sounds/hit.wav
+
+#begin Sounds/loose.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/loose.wav;Models/Coleccionables/loose
+
+#begin Sounds/loose.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/loose.wav;Models/Coleccionables/loose
+
+#begin Sounds/loose.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/loose.wav
+
+#begin Sounds/loose2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/loose2.wav;Models/Coleccionables/loose2
+
+#begin Sounds/loose2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/loose2.wav;Models/Coleccionables/loose2
+
+#begin Sounds/loose2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/loose2.wav
+
+#begin Sounds/lose.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/lose.wav;Models/Coleccionables/lose
+
+#begin Sounds/lose.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/lose.wav;Models/Coleccionables/lose
+
+#begin Sounds/lose.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/lose.wav
+
+#begin Sounds/motor.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/motor.wav
+
+#begin Sounds/motor.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/motor.wav;Models/Coleccionables/motor
+
+#begin Sounds/motor.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/motor.wav;Models/Coleccionables/motor
+
 #begin SpriteFonts/DefaultFont.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor

@@ -124,6 +124,7 @@
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.4" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Content\Sounds\" />
     <Folder Include="src\Legacy\" />
   </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="CollectPackageReferences">

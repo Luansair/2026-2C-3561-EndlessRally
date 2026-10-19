@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using System;
 using System.Collections.Generic;
 using TGC.MonoGame.TP.src.Physics;
@@ -52,9 +53,9 @@ namespace TGC.MonoGame.TP.src.Core
 
         private float _spawnTimer;
         private float _playerDistance;
-
+        private SoundEffect _sfx;
         public TrafficController(VehiclePresets presets, World world, Entity player, RoadSpawner road,
-            TrafficConfig config = null, Random random = null)
+            TrafficConfig config = null, Random random = null, SoundEffect sfx=null)
         {
             _presets = presets;
             _world = world;
@@ -62,6 +63,8 @@ namespace TGC.MonoGame.TP.src.Core
             _road = road;
             _config = config ?? new TrafficConfig();
             _random = random ?? new Random();
+            
+            _sfx = sfx;
 
             _playerDistance = _road.GetDistanceAlongRoad(_player.Transform.Position);
             Prefill();
@@ -143,7 +146,7 @@ namespace TGC.MonoGame.TP.src.Core
             if (type == VehicleType.HeavyCar) factor *= 0.85f;
 
             var car = new TrafficCar(entity, lane, _config.LaneWidth, distance, referenceSpeed * factor);
-            entity.Response = new TrafficCollisionResponse(car, _player, _config.CrashDamage);
+            entity.Response = new TrafficCollisionResponse(car, _player, _config.CrashDamage,_sfx);
 
             car.Update(0f, car.DesiredSpeed, _road);   // lo ubica en el camino antes de que se dibuje
             Vehicles.Add(car);
