@@ -63,6 +63,26 @@ float SurfaceTypeB = 0;
 float BlendStart = 0;
 float BlendEnd = 0;
 
+
+//variables y textura para shadowMap
+float4x4 LightViewProjection;
+float2 shadowMapSize;
+
+static const float modulatedEpsilon = 0.0020f;
+static const float maxEpsilon = 0.0006f;
+
+texture shadowMap;
+sampler2D shadowMapSampler = sampler_state
+{
+    Texture = <shadowMap>;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+
 struct VertexShaderInput
 {
 	float4 Position : POSITION0;
@@ -78,6 +98,7 @@ struct VertexShaderOutput
     float4 WorldPosition : TEXCOORD1;
     float4 Normal : TEXCOORD2;
     float4 VertexColor : COLOR0;
+    float4 LightSpacePosition : TEXCOORD3;
 };
 
 VertexShaderOutput MainVS(in VertexShaderInput input)
@@ -87,6 +108,7 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
     // Model space to World space
     float4 worldPosition = mul(input.Position, World);
 	output.WorldPosition = worldPosition;
+    output.LightSpacePosition = mul(worldPosition, LightViewProjection);
     // World space to View space
     float4 viewPosition = mul(worldPosition, View);	
 	// View space to Projection space
@@ -111,6 +133,43 @@ float3 SurfaceAlbedo(float type, float3 baseColor)
 
     return lerp(lerp(baseColor, dirt, isDirt), snow, isSnow);
 }
+
+//cálculo de sombras
+float CalculateShadowPCF(float4 lightSpacePos, float3 normal, float3 lightDir)
+{
+    if (shadowMapSize.x <= 0.0f) return 1.0f; //para evitar que intente meter sombras en el menu
+    float3 lightSpacePosition = lightSpacePos.xyz / lightSpacePos.w;
+    float2 shadowCoords = 0.5f * lightSpacePosition.xy + float2(0.5f, 0.5f);
+    shadowCoords.y = 1.0f - shadowCoords.y;
+
+    // Si el píxel está fuera del alcance del mapa de sombras, está iluminado (1.0)
+    if (shadowCoords.x < 0.0f || shadowCoords.x > 1.0f ||
+        shadowCoords.y < 0.0f || shadowCoords.y > 1.0f ||
+        lightSpacePosition.z > 1.0f || lightSpacePosition.z < 0.0f)
+    {
+        return 1.0f;
+    }
+
+    float inclinationBias = max(modulatedEpsilon * (1.0f - dot(normal, lightDir)), maxEpsilon);
+
+    float notInShadow = 0.0f;
+    float2 texelSize = 1.0f / shadowMapSize;
+
+    [unroll]
+    for (int x = -1; x <= 1; x++)
+    {
+        [unroll]
+        for (int y = -1; y <= 1; y++)
+        {
+            float pcfDepth = tex2D(shadowMapSampler, shadowCoords + float2(x, y) * texelSize).r + inclinationBias;
+            notInShadow += step(lightSpacePosition.z, pcfDepth) / 9.0f;
+        }
+    }
+
+    return notInShadow;
+}
+
+
 
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
@@ -151,14 +210,20 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     // Tinte frio
     litColor *= lerp(float3(1.0, 1.0, 1.0), ColdTint, ColdAmount);
 
+    // Calculamos el factor de sombra
+    float shadowFactor = CalculateShadowPCF(input.LightSpacePosition, normal, lightDirection);
+
+    // La sombra bloquea la luz difusa y especular, pero respeta la luz ambiente
+    ambientLight = lightAmbientColor * KAmbient;
+    litColor = saturate(ambientLight + diffuseLight * shadowFactor) * surfaceColor + (specularLight * shadowFactor);
+
     // Niebla (exponencial al cuadrado, segun la distancia a la camara)
     float fogDistance = length(eyePosition - input.WorldPosition.xyz) * FogDensity;
     float fogAmount = saturate(1.0 - exp(-fogDistance * fogDistance));
     litColor = lerp(litColor, FogColor, fogAmount);
 
     float4 finalColor = float4(litColor, texelColor.a);
-    
-	return finalColor;
+    return finalColor;
 }
 
 technique BasicColorDrawing

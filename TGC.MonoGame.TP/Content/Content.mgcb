@@ -25,6 +25,12 @@
 /processorParam:DebugMode=Auto
 /build:Effects/HudShader.fx
 
+#begin Effects/ShadowMap.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/ShadowMap.fx
+
 #begin Models/Building_Big.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -2771,31 +2777,7 @@
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Sounds/Boom.wav;Models/Coleccionables/Boom
-
-#begin Sounds/Boom.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/Boom.wav;Models/Coleccionables/Boom
-
-#begin Sounds/Boom.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
 /build:Sounds/Boom.wav
-
-#begin Sounds/crash.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/crash.wav;Models/Coleccionables/crash
-
-#begin Sounds/crash.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/crash.wav;Models/Coleccionables/crash
 
 #begin Sounds/crash.wav
 /importer:WavImporter
@@ -2807,31 +2789,7 @@
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Sounds/loose.wav;Models/Coleccionables/loose
-
-#begin Sounds/loose.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/loose.wav;Models/Coleccionables/loose
-
-#begin Sounds/loose.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
 /build:Sounds/loose.wav
-
-#begin Sounds/loose2.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/loose2.wav;Models/Coleccionables/loose2
-
-#begin Sounds/loose2.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/loose2.wav;Models/Coleccionables/loose2
 
 #begin Sounds/loose2.wav
 /importer:WavImporter
@@ -2843,31 +2801,7 @@
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Sounds/lose.wav;Models/Coleccionables/lose
-
-#begin Sounds/lose.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/lose.wav;Models/Coleccionables/lose
-
-#begin Sounds/lose.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
 /build:Sounds/lose.wav
-
-#begin Sounds/motor.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/motor.wav
-
-#begin Sounds/motor.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/motor.wav;Models/Coleccionables/motor
 
 #begin Sounds/motor.wav
 /importer:WavImporter

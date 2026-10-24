@@ -36,6 +36,11 @@ public class TGCGame : Game
     private GameAssets _assets;
 
     private Effect _effect;
+    private Effect _shadowEffect;
+    private const int ShadowmapSize = 2048;
+    private RenderTarget2D _shadowMapRenderTarget;
+    private Matrix _lightView;
+    private Matrix _lightProjection;
     private SoundEffect _soundEffectMotor;
     private SoundEffect _soundEffectLose;
     private SoundEffect _soundEffectHit;
@@ -132,6 +137,8 @@ public class TGCGame : Game
         _hudEffect = Content.Load<Effect>(ContentFolderEffects + "HudShader");
         //LightManager.ApplyDefaults(_hudEffect);
 
+        _shadowEffect = Content.Load<Effect>(ContentFolderEffects + "ShadowMap");
+
         // Carga de assets
         var contentLoader = new GameContentLoader();
         _assets = contentLoader.Load(Content, GraphicsDevice);
@@ -179,6 +186,21 @@ public class TGCGame : Game
             DespawnDistance = DespawnDistance,
             InitialSegmentCount = 100
         };
+
+        //Inicializo el renderTarget
+        _shadowMapRenderTarget = new RenderTarget2D(
+            GraphicsDevice,
+            ShadowmapSize,
+            ShadowmapSize,
+            false,
+            SurfaceFormat.Single,
+            DepthFormat.Depth24,
+            0,
+            RenderTargetUsage.PlatformContents
+        );
+
+        // Caja de visión de la luz
+        _lightProjection = Matrix.CreateOrthographic(300f, 300f, 350f, 1150f);
 
         _roadSpawner = roadSpawnerFactory.Create(spawnerConfig, _world); //Prueba
 
@@ -245,8 +267,13 @@ public class TGCGame : Game
         }
         else
         {
+            Vector3 carPos = _player.Vehicle.Transform.Position;
             Vector3 lightOffset = new Vector3(400f, 500f, 400f);
-            Vector3 lightPosition = _player.Vehicle.Transform.Position + lightOffset;
+            Vector3 lightPosition = carPos + lightOffset;
+
+            // La cámara de la luz se ubica en lightPosition y mira hacia el auto
+            _lightView = Matrix.CreateLookAt(lightPosition, carPos, Vector3.Up);
+
             _effect.Parameters["lightPosition"]?.SetValue(lightPosition);
             _effect.Parameters["eyePosition"]?.SetValue(_followCamera.Position);
 
@@ -344,24 +371,47 @@ public class TGCGame : Game
 
     private void DrawGame(GameTime gameTime)
     {
+        #region pass1
+        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        GraphicsDevice.BlendState = BlendState.Opaque;
+        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+
+        GraphicsDevice.SetRenderTarget(_shadowMapRenderTarget);
+        GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.White, 1f, 0);
+
+        _shadowEffect.CurrentTechnique = _shadowEffect.Techniques["DepthPass"];
+
+        // Dibujamos todas las entidades del mundo (autos, ruta, árboles, casas) en el mapa de sombras
+        _world.Draw(_shadowEffect, _lightView, _lightProjection);
+        #endregion
+
+        #region pass2
+        GraphicsDevice.SetRenderTarget(null);
+        GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, new Color(_atmosphere.Sky), 1f, 0);
+
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         GraphicsDevice.BlendState = BlendState.Opaque;
         GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
         GraphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
-        
-        GraphicsDevice.Clear(new Color(_atmosphere.Sky)); // Cielo (cambia con la superficie)
+
         Atmosphere.Apply(_effect, _atmosphere, SpawnDistance);
         _effect.Parameters["Hud"]?.SetValue(false);
         _effect.Parameters["UseSurfaceBlend"]?.SetValue(0f);
-        _effect.Parameters["View"].SetValue(_followCamera.View);
-        _effect.Parameters["Projection"].SetValue(_followCamera.Projection);
-        
-        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-        //Dibujamos un piso
-        DrawCustomFloor();
+        _effect.Parameters["View"]?.SetValue(_followCamera.View);
+        _effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
 
-        _world.Draw(_effect, _followCamera.View, _followCamera.Projection);  // Esto ya dibuja al auto tambien!
+        // Pasamos los parámetros de sombra al BasicShader
+        _effect.Parameters["shadowMap"]?.SetValue(_shadowMapRenderTarget);
+        _effect.Parameters["shadowMapSize"]?.SetValue(Vector2.One * ShadowmapSize);
+        _effect.Parameters["LightViewProjection"]?.SetValue(_lightView * _lightProjection);
+
+        // Dibujamos el piso y el mundo con sombras
+        DrawCustomFloor();
+        _world.Draw(_effect, _followCamera.View, _followCamera.Projection);
+
+        // Finalmente el HUD por encima de todo
         DrawHud();
+        #endregion
     }
     private void DrawHud()
     {
@@ -384,10 +434,10 @@ public class TGCGame : Game
         Vector3 up = Vector3.Up;
         _floorVertices = new VertexPositionNormalTexture[]
         {
-            new(new Vector3(-size, -1.5f, -size), up, new Vector2(0f, 0f)),
-            new(new Vector3(size, -1.5f, -size),  up, new Vector2(100f, 0f)),
-            new(new Vector3(size, -1.5f, size),   up, new Vector2(100f, 100f)),
-            new(new Vector3(-size, -1.5f, size),  up, new Vector2(0f, 100f))
+            new(new Vector3(-size, 0f, -size), up, new Vector2(0f, 0f)),
+            new(new Vector3(size, 0f, -size),  up, new Vector2(100f, 0f)),
+            new(new Vector3(size, 0f, size),   up, new Vector2(100f, 100f)),
+            new(new Vector3(-size, 0f, size),  up, new Vector2(0f, 100f))
         };
         _floorIndices = new short[] { 0, 1, 2, 0, 2, 3 };
     }
@@ -395,7 +445,7 @@ public class TGCGame : Game
     //Metodo para que dibuje el piso
     private void DrawCustomFloor()
     {
-        Matrix floorWorld = Matrix.CreateTranslation(new Vector3(0f, -0.2f, 0f));
+        Matrix floorWorld = Matrix.CreateTranslation(new Vector3(0f, -0.4f, 0f));
         Matrix invTransposeFloor = Matrix.Transpose(Matrix.Invert(floorWorld));
         _effect.Parameters["World"]?.SetValue(floorWorld);
         _effect.Parameters["View"]?.SetValue(_followCamera.View);
@@ -421,6 +471,7 @@ public class TGCGame : Game
     protected override void UnloadContent()
     {
         // Libero los recursos.
+        _shadowMapRenderTarget?.Dispose();
         Content.Unload();
 
         base.UnloadContent();
