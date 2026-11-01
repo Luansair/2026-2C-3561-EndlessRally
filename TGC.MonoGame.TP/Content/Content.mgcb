@@ -2807,7 +2807,7 @@
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Sounds/motor.wav;Models/Coleccionables/motor
+/build:Sounds/motor.wav
 
 #begin SpriteFonts/DefaultFont.spritefont
 /importer:FontDescriptionImporter

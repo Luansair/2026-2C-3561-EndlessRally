@@ -53,7 +53,7 @@ namespace TGC.MonoGame.TP.src.Core
         {
             float response = Crashed ? 2.5f : 6f;
             Speed += (targetSpeed - Speed) * (1f - MathF.Exp(-response * dt));
-            Distance += Speed * dt;
+            Distance +=  Speed * dt * (Lane == -1 ?-1:1);
 
             if (Crashed)
             {
@@ -72,7 +72,8 @@ namespace TGC.MonoGame.TP.src.Core
             var t = Vehicle.Transform;
             t.Position = sample.Position + _lastRight * (_laneOffset + _crashOffset);
             // El modelo mira hacia -Z cuando RotationY = 0
-            t.RotationY = MathF.Atan2(-sample.Forward.X, -sample.Forward.Z) + _crashYaw;
+            var rotation = MathF.Atan2(-sample.Forward.X, -sample.Forward.Z) + _crashYaw;
+            t.RotationY = Lane == -1 ? (rotation + MathF.PI) :rotation;
             return true;
         }
 
