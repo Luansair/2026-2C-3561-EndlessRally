@@ -1,17 +1,18 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using TGC.MonoGame.TP.src.Road;
+using TGC.MonoGame.TP.src.Animation;
 using TGC.MonoGame.TP.src.Assets;
+using TGC.MonoGame.TP.src.Collectibles;
 using TGC.MonoGame.TP.src.Core;
 using TGC.MonoGame.TP.src.Decorations;
 using TGC.MonoGame.TP.src.Menu;
 using TGC.MonoGame.TP.src.Rendering;
+using TGC.MonoGame.TP.src.Road;
 using TGC.MonoGame.TP.src.Vehicles;
-using TGC.MonoGame.TP.src.Collectibles;
-using Microsoft.Xna.Framework.Audio;
 
 namespace TGC.MonoGame.TP;
 
@@ -121,7 +122,7 @@ public class TGCGame : Game
     ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
     ///     que podemos pre calcular para nuestro juego.
     /// </summary>
-    
+    private float _animTime;
     protected override void LoadContent()
     {
         // Carga de cosas del menu supongo
@@ -146,9 +147,12 @@ public class TGCGame : Game
         // Carga de opciones de vehiculos
         var vehiclePresets = new VehiclePresets(_assets.Cars);
         _vehicles = new VehicleCarrousel();
-        _vehicles.Add(vehiclePresets.Create(VehicleType.LightCar));
-        _vehicles.Add(vehiclePresets.Create(VehicleType.MediumCar));
-        _vehicles.Add(vehiclePresets.Create(VehicleType.HeavyCar));
+        foreach (var type in new[] { VehicleType.LightCar, VehicleType.MediumCar, VehicleType.HeavyCar })
+        {
+            var car = vehiclePresets.Create(type);
+            car.Render.Animator = new WheelExplosion(car.Render.ModelInfo);
+            _vehicles.Add(car);
+        }
 
         _currentVehicle = _vehicles.GetCurrent();
         // Configuracion de factories para crear entidades
@@ -237,6 +241,7 @@ public class TGCGame : Game
         if (!_enCarrera)
         {
             _menuCarYaw += elapsedTime * 1.5f;
+            
             // Cambiar de auto con flechas
             if (keyboardState.IsKeyDown(Keys.Right) && _prevKeyboard.IsKeyUp(Keys.Right))
             {
@@ -250,6 +255,8 @@ public class TGCGame : Game
             // comenzar
             if (keyboardState.IsKeyDown(Keys.Enter) && _prevKeyboard.IsKeyUp(Keys.Enter))
             {
+
+
                 _enCarrera = true;
                 _estadoActual = GameState.Playing;
                 //Giro la matriz de mundo del auto, y le aplico una escala para que sea mas acorde al camino
@@ -302,6 +309,13 @@ public class TGCGame : Game
             }
             else
             {
+                _animTime += elapsedTime;
+                if (_currentVehicle.Render.Animator is WheelExplosion wheels)
+                {
+                    // ida y vuelta suave cada 6 s
+                    wheels.Progress = 0.5f + 0.5f * _animTime;// MathF.Cos( * MathHelper.TwoPi / 6f);
+                    wheels.Update(elapsedTime);
+                }
                 _soundEffectInstance.Stop();
             }
         }

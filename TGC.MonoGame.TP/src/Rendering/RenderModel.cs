@@ -1,5 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using TGC.MonoGame.TP.src.Animation;
 using TGC.MonoGame.TP.src.Assets;
 
 namespace TGC.MonoGame.TP.src.Rendering
@@ -13,6 +14,9 @@ namespace TGC.MonoGame.TP.src.Rendering
         // Indice de la parte del modelo que usa la mezcla de superficies (-1 = ninguna)
         public int SurfaceBlendPartIndex { get; set; } = -1;
 
+        // Opcional: permite animar meshes sueltos (por ejemplo las ruedas de un auto)
+        public IMeshAnimator Animator { get; set; }
+
         public RenderModel(ModelInfo modelInfo)
         {
             ModelInfo = modelInfo;
@@ -25,7 +29,10 @@ namespace TGC.MonoGame.TP.src.Rendering
 
             foreach (var mesh in model.Meshes)
             {
-                var meshWorld = boneTransforms[mesh.ParentBone.Index] * world;
+                var boneAbsolute = boneTransforms[mesh.ParentBone.Index];
+                var meshWorld = Animator != null
+                    ? Animator.GetMeshWorld(mesh, boneAbsolute, world)
+                    : boneAbsolute * world;
                 var invTranspose = Matrix.Transpose(Matrix.Invert(meshWorld));
 
                 for (int i = 0; i < mesh.MeshParts.Count; i++)
