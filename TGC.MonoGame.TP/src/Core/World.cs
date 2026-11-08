@@ -1,9 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using System.Linq;
+using TGC.MonoGame.TP.src.Animation;
 using TGC.MonoGame.TP.src.Collectibles;
 using TGC.MonoGame.TP.src.Physics;
-using System.Linq;
 namespace TGC.MonoGame.TP.src.Core
 {
     internal class World
@@ -23,6 +24,11 @@ namespace TGC.MonoGame.TP.src.Core
 
             _collectibleSystem.Update(MovableEntities, playerEntity, playerTarget);
             _collectibleSystem.Update(StaticEntities, playerEntity,  playerTarget);
+            foreach (var e in StaticEntities)
+            {
+                if (!e.isCollectible) continue;
+                if (e.Render.Animator is TransformAnimator transformAnimator) transformAnimator.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+            }
 
             float despawnDist = 800f;
             

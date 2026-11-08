@@ -106,7 +106,7 @@ namespace TGC.MonoGame.TP.src.Animation
             if (!_wheels.TryGetValue(mesh, out var wheel))
                 return boneAbsolute * world; // carroceria: sin cambios
 
-            float local = MathHelper.Clamp((Progress - wheel.Delay) / (1f - _maxDelay), 0f, 1f);
+            float local = MathHelper.Clamp((Progress - wheel.Delay) / (1f - _maxDelay), 0f, 50f);
             float t = MathHelper.SmoothStep(0f, 1f, local);
 
             // Matriz del "auto" desplazado para esta rueda, generada a partir de la del auto

@@ -29,6 +29,8 @@ namespace TGC.MonoGame.TP.src.Core
 
         // Velocidad real del auto en unidades/segundo (la usa el trafico para ser relativo al jugador)
         public float CurrentSpeed { get; private set; }
+        public float CurrentFriction { get; internal set; } = 1f;
+
         private float modifConsumoComb = 0.5f;
         private KeyboardState previousKeyboardState = Keyboard.GetState();
         private KeyboardState currentKeyboardState = Keyboard.GetState();
@@ -86,7 +88,7 @@ namespace TGC.MonoGame.TP.src.Core
                 {
                     slow = Math.Max(slow - (3.0f * speed * DeltaTime), 0f);
                 }
-                t.Position += direction * Math.Max(speed-slow, speed/2) * dificultad;
+                t.Position += direction * Math.Max(speed-slow, speed/2) * dificultad * CurrentFriction;
                 this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * DeltaTime * modifConsumoComb);
                 if (keyboard.IsKeyDown(Keys.A))
                 {

@@ -27,6 +27,7 @@ namespace TGC.MonoGame.TP.src.Core
         // Solo para los tramos de camino: mezcla de superficies y largo del tramo (para el shader)
         public SurfaceBlend? Blend { get; set; }
         public float ChunkLength { get; set; }
+        public bool isCollectible { get; internal set; } = false;
 
         public Entity() { }
         public BoundingSphere GetWorldSphere()

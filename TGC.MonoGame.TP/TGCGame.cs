@@ -285,6 +285,7 @@ public class TGCGame : Game
             _effect.Parameters["eyePosition"]?.SetValue(_followCamera.Position);
 
             // Todo el movimiento se delega a la clase
+            _player.CurrentFriction = _atmosphere.Friction;
             _player.Update(gameTime, keyboardState); 
             _followCamera.Update(gameTime, _player.Vehicle.Transform.World);
 
@@ -300,6 +301,7 @@ public class TGCGame : Game
                 AtmosphereState objetivo = Atmosphere.Sample(bajoElAuto.Blend);
                 float suavizado = 1f - MathF.Exp(-3f * elapsedTime);
                 _atmosphere = Atmosphere.Lerp(_atmosphere, objetivo, suavizado);
+
             }
 
             this.Window.Title = "Score: " + _player.Score + " Fuel: " + _player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current;

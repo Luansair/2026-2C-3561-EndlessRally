@@ -102,6 +102,8 @@ namespace TGC.MonoGame.TP.src.Road
                     break; // Si la pieza más vieja aún está cerca del auto, no borramos nada
                 }
             }
+
+
         }
 
         public void Draw(Effect effect, Matrix view, Matrix projection)

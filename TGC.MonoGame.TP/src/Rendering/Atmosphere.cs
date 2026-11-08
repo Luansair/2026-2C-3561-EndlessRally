@@ -80,7 +80,7 @@ namespace TGC.MonoGame.TP
                         Cold = 1f,
                         Ground = new Vector3(0.85f, 0.90f, 0.95f),
                         LightDiffuse = new Vector3(0.80f, 0.90f, 1.0f),
-                        Friction = 0.50f
+                        Friction = 1.50f
                     };
                 default: // Asphalt
                     return new AtmosphereState

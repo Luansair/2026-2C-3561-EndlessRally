@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
+using TGC.MonoGame.TP.src.Animation;
 using TGC.MonoGame.TP.src.Assets;
 using TGC.MonoGame.TP.src.Core;
 using TGC.MonoGame.TP.src.Physics;
@@ -53,9 +54,15 @@ namespace TGC.MonoGame.TP.src.Collectibles
                 Collectible = effect,
                 Response = NullCollisionResponse.Instance,
             };
-
+            collectible.Render.Animator = new TransformAnimator
+            {
+                RotationSpeed = 2.5f,     // qué tan rápido gira
+                BobbingAmplitude = 15.0f, // qué tanto sube y baja
+                BobbingSpeed = 5.0f       // frecuencia del rebote
+            };
             collectible.Transform.Position = collPos;
             collectible.Transform.Scale = model.Scale;
+            collectible.isCollectible = true;
 
             return collectible;
         }
