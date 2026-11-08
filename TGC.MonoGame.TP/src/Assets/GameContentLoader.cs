@@ -55,10 +55,10 @@ namespace TGC.MonoGame.TP.src.Assets
 
         private CollectibleAssets LoadCollectibles(ContentManager content, GraphicsDevice graphics)
         {
-            var coinModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/gems_monogame/gem1"), 200f);
-            var fuelModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/Fuel/gascylinder"), 0.13f);
-            var wrenchModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/Wrench/Monkey-Wrench"), 0.13f);
-            var obstacleModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere2"), 10f);
+            var coinModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/gems_monogame/gem3"), 1f);
+            var fuelModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/Fuel/gascylinder2"), 1f);
+            var wrenchModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/Wrench/Monkey-Wrench2"), 1f);
+            var obstacleModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere3"), 1f);
             return new CollectibleAssets
             {
                 Coin = coinModel,

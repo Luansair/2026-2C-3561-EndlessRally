@@ -28,23 +28,25 @@ namespace TGC.MonoGame.TP.src.Collectibles
             {
                 model = _assets.Coin;
                 effect = new CollectibleEffect { Score = 10 };
-                collPos -= new Vector3(0f, 1f, 0f); // Ajuste de posición para que esté en el suelo
+                collPos.Y -= 1f; 
             }
             else if (roll < 70) // 25% Nafta
             {
                 model = _assets.Fuel;
                 effect = new CollectibleEffect { Fuel = 50.0f };
+                collPos.Y -= 1f; 
             }
             else if (roll < 85) // 15% Llave inglesa (Reparación)
             {
                 model = _assets.Wrench;
                 effect = new CollectibleEffect { Health = 40.0f };
+                collPos.Y -= 0.5f; 
             }
             else // 15% Obstáculo / Trampa
             {
                 model = _assets.Obstacle;
                 effect = new CollectibleEffect { Damage = 25.0f };
-                collPos -= new Vector3(0f, 1f, 0f); // Ajuste de posición para que esté en el suelo
+                collPos.Y -= 1f; // Ajuste de posición para que esté en el suelo
             }
 
             var collectible = new Entity
@@ -56,12 +58,12 @@ namespace TGC.MonoGame.TP.src.Collectibles
             };
             collectible.Render.Animator = new TransformAnimator
             {
-                RotationSpeed = 2.5f,     // qué tan rápido gira
-                BobbingAmplitude = 15.0f, // qué tanto sube y baja
-                BobbingSpeed = 5.0f       // frecuencia del rebote
+                RotationSpeed = 2f,     // qué tan rápido gira
+                BobbingAmplitude = 0.7f, // qué tanto sube y baja
+                BobbingSpeed = 2.0f       // frecuencia del rebote
             };
-            collectible.Transform.Position = collPos;
             collectible.Transform.Scale = model.Scale;
+            collectible.Transform.Position = collPos;
             collectible.isCollectible = true;
 
             return collectible;

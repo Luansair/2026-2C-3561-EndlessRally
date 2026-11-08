@@ -13,10 +13,10 @@ namespace TGC.MonoGame.TP.src.Animation
         public float RotationSpeed { get; set; } = 2f;
 
         /// <summary>Altura máxima que sube y baja (amplitud).</summary>
-        public float BobbingAmplitude { get; set; } = 5f;
+        public float BobbingAmplitude { get; set; } = 4f;
 
         /// <summary>Velocidad del movimiento de arriba y abajo.</summary>
-        public float BobbingSpeed { get; set; } = 4f;
+        public float BobbingSpeed { get; set; } = 2f;
 
         public void Update(float dt)
         {
