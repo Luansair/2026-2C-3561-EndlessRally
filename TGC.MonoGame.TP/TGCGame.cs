@@ -68,7 +68,7 @@ public class TGCGame : Game
     }
 
     private GameState _estadoActual = GameState.Menu;
-
+    private const float DeathAnimationDuration = 2.5f;
     private Entity _currentVehicle;
     private PlayerController _player;
     private TrafficController _traffic;
@@ -272,7 +272,7 @@ public class TGCGame : Game
                 _traffic = new TrafficController(vehiclePresets, _world, _currentVehicle, _roadSpawner,sfx: _soundEffectHit);
             }
         }
-        else
+        else if (_estadoActual == GameState.Playing)
         {
             Vector3 carPos = _player.Vehicle.Transform.Position;
             Vector3 lightOffset = new Vector3(400f, 500f, 400f);
@@ -311,14 +311,32 @@ public class TGCGame : Game
             }
             else
             {
+                _soundEffectInstance.Stop();
                 _animTime += elapsedTime;
+                float progress = Math.Clamp(_animTime / DeathAnimationDuration, 0f, 1f);
                 if (_currentVehicle.Render.Animator is WheelExplosion wheels)
                 {
                     // ida y vuelta suave cada 6 s
-                    wheels.Progress = 0.5f + 0.5f * _animTime;// MathF.Cos( * MathHelper.TwoPi / 6f);
+                    wheels.Progress = progress;//  0.5f + 0.5f * _animTime;// MathF.Cos( * MathHelper.TwoPi / 6f);
                     wheels.Update(elapsedTime);
                 }
-                _soundEffectInstance.Stop();
+                _followCamera.Update(gameTime, _player.Vehicle.Transform.World);
+                if (_animTime >= DeathAnimationDuration)
+                {
+                    _estadoActual = GameState.Lose;
+                }
+            }
+        }
+        else if (_estadoActual == GameState.Lose)
+        {
+            // R = Reiniciar carrera - M o Esc = Volver al menu
+            if (keyboardState.IsKeyDown(Keys.R) && _prevKeyboard.IsKeyUp(Keys.R))
+            {
+                ResetGame(volverAlMenu: false);
+            }
+            else if (keyboardState.IsKeyDown(Keys.M) && _prevKeyboard.IsKeyUp(Keys.M))
+            {
+                ResetGame(volverAlMenu: true);
             }
         }
 
@@ -336,7 +354,12 @@ public class TGCGame : Game
             
             DrawGame(gameTime);
         }
-        if(_estadoActual == GameState.Menu)
+        else if (_estadoActual == GameState.Lose)
+        {
+            DrawGame(gameTime);
+            DrawLose();
+        }
+        else if (_estadoActual == GameState.Menu)
         {
             DrawMenu();
         }
@@ -428,6 +451,105 @@ public class TGCGame : Game
         // Finalmente el HUD por encima de todo
         DrawHud();
         #endregion
+    }
+    private void ResetGame(bool volverAlMenu)
+    {
+        //limpiar el mundo y animaciones
+        _world = new World();
+        _animTime = 0f;
+        _atmosphere = Atmosphere.Preset(SurfaceType.Asphalt);
+
+        Vector3 largadaPos = new Vector3(0f, 0.05f, 0f);
+
+        //recrear RoadSpawner
+        var treesGroup = new DecorationGroup(DecorationType.Tree, 10, [_assets.Decorations.Tree]);
+        var rocksGroup = new DecorationGroup(DecorationType.Rock, 15, _assets.Decorations.Rocks);
+        var houseGroup = new DecorationGroup(DecorationType.House, 13, [_assets.Decorations.House]);
+        var natureRecipes = new List<DecorationGroup> { treesGroup, rocksGroup };
+        var houseRecipes = new List<DecorationGroup> { houseGroup };
+
+        var decorationsFactory = new DecorationAreaFactory(natureRecipes, houseRecipes);
+        var collectibleFactory = new CollectibleFactory(_assets.Collectibles);
+        var roadSpawnerFactory = new RoadSpawnerFactory(_assets.Roads, decorationsFactory, collectibleFactory);
+
+        var spawnerConfig = new RoadSpawnerConfig
+        {
+            StartPosition = largadaPos,
+            SpawnDistance = SpawnDistance,
+            DespawnDistance = DespawnDistance,
+            InitialSegmentCount = 100
+        };
+        _roadSpawner = roadSpawnerFactory.Create(spawnerConfig, _world);
+
+        //cargar el auto seleccionado para restaurar salud, combustible y ruedas
+        var vehiclePresets = new VehiclePresets(_assets.Cars);
+        _currentVehicle.Damageable?.Heal(_currentVehicle.Damageable.Max);
+        _currentVehicle.Fuel?.Refill(_currentVehicle.Fuel.Max);
+        _currentVehicle.Active = true;
+        // Reiniciamos las ruedas si explotaron
+        if (_currentVehicle.Render.Animator is WheelExplosion wheels)
+        {
+            wheels.Progress = 0f;
+            wheels.Update(0f);
+        }
+
+        if (volverAlMenu)
+        {
+            _enCarrera = false;
+            _estadoActual = GameState.Menu;
+            _currentVehicle.Transform.Position = Vector3.Zero;
+            _currentVehicle.Transform.RotationY = 0f;
+        }
+        else
+        {
+            _currentVehicle.Transform.Position = largadaPos;
+            _currentVehicle.Transform.RotationY = MathHelper.ToRadians(180f);
+            _currentVehicle.Transform.Scale = 0.008f;
+
+            _currentVehicle.Speed = 0f;
+            _currentVehicle.Velocity = Vector3.Zero;
+            _currentVehicle.Acceleration = Vector3.Zero;
+
+            _followCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
+            _followCamera.Update(new GameTime(), _currentVehicle.Transform.World);
+
+            _player = new PlayerController(_currentVehicle, _soundEffectLose);
+            _world.Add(_currentVehicle);
+            _traffic = new TrafficController(vehiclePresets, _world, _currentVehicle, _roadSpawner, sfx: _soundEffectHit);
+
+            _enCarrera = true;
+            _estadoActual = GameState.Playing;
+        }
+    }
+    private void DrawLose()
+    {
+        int screenWidth = GraphicsDevice.Viewport.Width;
+        int screenHeight = GraphicsDevice.Viewport.Height;
+
+        _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+        _spriteBatch.Draw(DefaultTexture, new Rectangle(0, 0, screenWidth, screenHeight), new Color(0, 0, 0, 180));
+
+        int panelWidth = 500;
+        int panelHeight = 280;
+        int panelX = (screenWidth - panelWidth) / 2;
+        int panelY = (screenHeight - panelHeight) / 2;
+
+        _spriteBatch.Draw(DefaultTexture, new Rectangle(panelX, panelY, panelWidth, panelHeight), new Color(20, 20, 24, 230));
+        _spriteBatch.Draw(DefaultTexture, new Rectangle(panelX, panelY, panelWidth, 4), Color.Crimson); // Borde superior
+
+        string titulo = "DESTRUIDO";
+        Vector2 sizeTitulo = _font.MeasureString(titulo);
+        _spriteBatch.DrawString(_font, titulo, new Vector2(panelX + (panelWidth - sizeTitulo.X) / 2, panelY + 30), Color.Crimson);
+
+        string scoreTexto = $"PUNTAJE: {_player.Score}";
+        Vector2 sizeScore = _font.MeasureString(scoreTexto);
+        _spriteBatch.DrawString(_font, scoreTexto, new Vector2(panelX + (panelWidth - sizeScore.X) / 2, panelY + 95), Color.Gold);
+
+        string opciones = "[R] Reintentar \n[M] Volver al Menu Principal";
+        Vector2 sizeOpciones = _font.MeasureString(opciones);
+        _spriteBatch.DrawString(_font, opciones, new Vector2(panelX + (panelWidth - sizeOpciones.X) / 2, panelY + 170), Color.White);
+
+        _spriteBatch.End();
     }
     private void DrawHud()
     {
