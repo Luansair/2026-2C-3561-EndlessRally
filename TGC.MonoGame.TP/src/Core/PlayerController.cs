@@ -31,7 +31,7 @@ namespace TGC.MonoGame.TP.src.Core
         public float CurrentSpeed { get; private set; }
         public float CurrentFriction { get; internal set; } = 1f;
 
-        private float modifConsumoComb = 0.5f;
+        private float modifConsumoComb = 30f;
         private KeyboardState previousKeyboardState = Keyboard.GetState();
         private KeyboardState currentKeyboardState = Keyboard.GetState();
 
@@ -78,15 +78,17 @@ namespace TGC.MonoGame.TP.src.Core
                     IsDead = true;
                     _sfxLose.Play(); 
                 }
-
-                dificultad += 0.01f * DeltaTime;
+    
+                dificultad = (float)Math.Pow(Score / 100, 2)*0.1f + 1;
                 if (keyboard.IsKeyDown(Keys.S))
                 {
                     slow = Math.Min(slow + (2.0f * speed * DeltaTime), speed * 0.75f);
+                    modifConsumoComb = 60f;
                 }
                 else
                 {
                     slow = Math.Max(slow - (3.0f * speed * DeltaTime), 0f);
+                    modifConsumoComb = 30f;
                 }
                 t.Position += direction * Math.Max(speed-slow, speed/2) * dificultad * CurrentFriction;
                 this.Vehicle.Fuel.Consume(this.Vehicle.VehicleStats.FuelConsumption * DeltaTime * modifConsumoComb);

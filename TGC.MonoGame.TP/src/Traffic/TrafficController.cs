@@ -53,7 +53,6 @@ namespace TGC.MonoGame.TP.src.Core
         private readonly Random _random;
 
         private float _spawnTimer;
-        private int intento = 0;
         private float _playerDistance;
         private SoundEffect _sfx;
         public TrafficController(VehiclePresets presets, World world, Entity player, RoadSpawner road,
@@ -65,7 +64,6 @@ namespace TGC.MonoGame.TP.src.Core
             _road = road;
             _config = config ?? new TrafficConfig();
             _random = random ?? new Random();
-            
             _sfx = sfx;
 
             _playerDistance = _road.GetDistanceAlongRoad(_player.Transform.Position);
@@ -76,7 +74,7 @@ namespace TGC.MonoGame.TP.src.Core
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (dt <= 0f) return;
-            _config.Difficulty = playerScore / 10 + 1;
+            _config.Difficulty = playerScore / 100 + 1;
             _playerDistance = _road.GetDistanceAlongRoad(_player.Transform.Position);
 
             // 1) Mover y borrar (de atras para adelante en la lista, asi se puede borrar mientras se recorre)
@@ -96,8 +94,6 @@ namespace TGC.MonoGame.TP.src.Core
                     Vehicles.RemoveAt(i);
                 }
             }
-            Console.WriteLine($"Intento {intento}: {Vehicles.Count}");
-            
             // 2) Generar autos nuevos adelante, de a poco
             _spawnTimer -= dt;
             if (_spawnTimer > 0f) return;
@@ -129,7 +125,6 @@ namespace TGC.MonoGame.TP.src.Core
         private bool TrySpawn(float ahead, bool prefill, float referenceSpeed)
         {
             float distance = _playerDistance + ahead;
-            intento += 1;
             if (!_road.TrySampleRoad(distance, out RoadSample sample)) return false;
             //_road.TrySampleRoad(distance, out RoadSample sample);
             if (sample.Type != RoadPieceType.STRAIGHT) return false;   // solo aparecen en rectas

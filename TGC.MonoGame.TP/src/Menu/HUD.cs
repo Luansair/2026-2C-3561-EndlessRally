@@ -84,13 +84,13 @@ internal class HUD
                 Color col = m.IndexOf(c) >= 0 ? White : Off;
                 switch (c)
                 {
-                    case 'a': Quad(v, x + t, y, w - 2 * t, t, col); break;
+                    case 'a': Quad(v, x + t, y + h - t, w - 2 * t, t, col); break;
                     case 'g': Quad(v, x + t, y + h / 2 - t / 2, w - 2 * t, t, col); break;
-                    case 'd': Quad(v, x + t, y + h - t, w - 2 * t, t, col); break;
-                    case 'f': Quad(v, x, y + t, t, sh, col); break;
-                    case 'b': Quad(v, x + w - t, y + t, t, sh, col); break;
-                    case 'e': Quad(v, x, y + h / 2 + t / 2, t, sh, col); break;
-                    case 'c': Quad(v, x + w - t, y + h / 2 + t / 2, t, sh, col); break;
+                    case 'd': Quad(v, x + t, y, w - 2 * t, t, col); break;
+                    case 'f': Quad(v, x, y + h / 2 + t / 2, t, sh, col); break;
+                    case 'b': Quad(v, x + w - t, y + h / 2 + t / 2, t, sh, col); break;
+                    case 'e': Quad(v, x, y + t, t, sh, col); break;
+                    case 'c': Quad(v, x + w - t, y + t, t, sh, col); break;
                 }
             }
         }

@@ -78,7 +78,7 @@ namespace TGC.MonoGame.TP.src.Road
                 SpawnNext();
             }
         }
-        public void Update(Vector3 carPosition)
+    public void  Update(Vector3 carPosition)
         {
             // Generar hacia adelante si el auto se acerca al final
             while (Vector3.Distance(nextPos, carPosition) < spawnDistance)
