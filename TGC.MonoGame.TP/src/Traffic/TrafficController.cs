@@ -11,14 +11,15 @@ namespace TGC.MonoGame.TP.src.Core
     /// <summary>Parametros del trafico procedural. Todo en unidades de mundo / segundos.</summary>
     internal sealed class TrafficConfig
     {
-        public int MaxCars { get; init; } = 14;
+        public int MaxCars { get; init; } = 5;
+        public int Difficulty { get; internal set;} = 1;   
         public float CarScale { get; init; } = 0.008f;     // misma escala que usa el auto del jugador
         public float LaneWidth { get; init; } = 2.5f;      // igual a los carriles de los coleccionables
 
         // Donde aparecen (distancia sobre el camino, adelante del jugador). La niebla tapa el "pop-in".
         public float SpawnAheadMin { get; init; } = 300f;
         public float SpawnAheadMax { get; init; } = 390f;
-        public float HideDistance { get; init; } = 280f;  // no aparecer mas cerca que esto en linea recta
+        public float HideDistance { get; init; } = 50f;  // no aparecer mas cerca que esto en linea recta
         public float PrefillAheadMin { get; init; } = 100f; // al arrancar la carrera ya hay autos en el camino
 
         // Donde desaparecen
@@ -52,6 +53,7 @@ namespace TGC.MonoGame.TP.src.Core
         private readonly Random _random;
 
         private float _spawnTimer;
+        private int intento = 0;
         private float _playerDistance;
         private SoundEffect _sfx;
         public TrafficController(VehiclePresets presets, World world, Entity player, RoadSpawner road,
@@ -69,15 +71,16 @@ namespace TGC.MonoGame.TP.src.Core
             _playerDistance = _road.GetDistanceAlongRoad(_player.Transform.Position);
             Prefill();
         }
-
-        public void Update(GameTime gameTime, float playerSpeed)
+        public int dif => _config.Difficulty;
+        public void Update(GameTime gameTime, float playerSpeed, int playerScore)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (dt <= 0f) return;
-
+            _config.Difficulty = playerScore / 10 + 1;
             _playerDistance = _road.GetDistanceAlongRoad(_player.Transform.Position);
 
             // 1) Mover y borrar (de atras para adelante en la lista, asi se puede borrar mientras se recorre)
+            
             for (int i = Vehicles.Count - 1; i >= 0; i--)
             {
                 TrafficCar car = Vehicles[i];
@@ -93,16 +96,19 @@ namespace TGC.MonoGame.TP.src.Core
                     Vehicles.RemoveAt(i);
                 }
             }
-
+            Console.WriteLine($"Intento {intento}: {Vehicles.Count}");
+            
             // 2) Generar autos nuevos adelante, de a poco
             _spawnTimer -= dt;
             if (_spawnTimer > 0f) return;
 
             _spawnTimer = Lerp(_config.SpawnIntervalMin, _config.SpawnIntervalMax, _random.NextSingle());
-            if (Vehicles.Count < _config.MaxCars)
+            int maxCars = _config.MaxCars * _config.Difficulty;
+            if (Vehicles.Count < maxCars)
             {
                 float reference = MathF.Max(playerSpeed, _config.MinReferenceSpeed);
-                TrySpawn(Lerp(_config.SpawnAheadMin, _config.SpawnAheadMax, _random.NextSingle()), false, reference);
+                var res = TrySpawn(Lerp(_config.SpawnAheadMin, _config.SpawnAheadMax, _random.NextSingle()), false, reference);
+                
             }
         }
 
@@ -111,8 +117,9 @@ namespace TGC.MonoGame.TP.src.Core
         {
             float reference = _player.VehicleStats.Acceleration * PlayerController.InitialDifficulty;
             int attempts = _config.MaxCars * 4;
+            int maxCars = _config.MaxCars * _config.Difficulty;   
 
-            for (int i = 0; i < attempts && Vehicles.Count < _config.MaxCars; i++)
+            for (int i = 0; i < attempts && Vehicles.Count < maxCars; i++)
             {
                 float ahead = Lerp(_config.PrefillAheadMin, _config.SpawnAheadMax, _random.NextSingle());
                 TrySpawn(ahead, true, MathF.Max(reference, _config.MinReferenceSpeed));
@@ -122,8 +129,9 @@ namespace TGC.MonoGame.TP.src.Core
         private bool TrySpawn(float ahead, bool prefill, float referenceSpeed)
         {
             float distance = _playerDistance + ahead;
-
+            intento += 1;
             if (!_road.TrySampleRoad(distance, out RoadSample sample)) return false;
+            //_road.TrySampleRoad(distance, out RoadSample sample);
             if (sample.Type != RoadPieceType.STRAIGHT) return false;   // solo aparecen en rectas
             if (!prefill && Vector3.Distance(sample.Position, _player.Transform.Position) < _config.HideDistance)
                 return false;   // todavia se veria aparecer: lo intentamos en el proximo ciclo
@@ -139,8 +147,9 @@ namespace TGC.MonoGame.TP.src.Core
             // Carril derecho = lento, izquierdo = rapido (como una autopista). Los pesados son un poco mas lentos.
             float factor = lane switch
             {
-                -1 => Lerp(0.50f, 0.65f, _random.NextSingle()),
-                0 => Lerp(0.38f, 0.52f, _random.NextSingle()),
+                -2 => Lerp(0.50f, 0.65f, _random.NextSingle()),
+                -1 => Lerp(0.38f, 0.52f, _random.NextSingle()),
+                1 => Lerp(0.38f, 0.52f, _random.NextSingle()),
                 _ => Lerp(0.28f, 0.40f, _random.NextSingle())
             };
             if (type == VehicleType.HeavyCar) factor *= 0.85f;
@@ -165,13 +174,19 @@ namespace TGC.MonoGame.TP.src.Core
 
         // Elige un carril libre al azar; int.MinValue si ninguno sirve
         private int PickLane(float distance)
-        {
-            int first = _random.Next(3);
-            for (int k = 0; k < 3; k++)
+       {
+            int[] lanes = { -2, -1, 1, 2 };
+
+            int first = _random.Next(lanes.Length);
+
+            for (int k = 0; k < lanes.Length; k++)
             {
-                int lane = ((first + k) % 3) - 1;
-                if (IsLaneFree(lane, distance)) return lane;
+                int lane = lanes[(first + k) % lanes.Length];
+
+                if (IsLaneFree(lane, distance))
+                    return lane;
             }
+            
             return int.MinValue;
         }
 
@@ -189,12 +204,12 @@ namespace TGC.MonoGame.TP.src.Core
                 }
                 else if (gap < _config.RowWindow)
                 {
-                    othersBlocked |= 1 << (car.Lane + 1);
+                    othersBlocked |= 1 << (car.Lane + 2);
                 }
             }
 
             // Si los otros dos carriles ya estan ocupados en esta fila, este cerraria la pared: siempre dejamos un hueco
-            bool wall = (othersBlocked & (othersBlocked - 1)) != 0;
+            bool wall = System.Numerics.BitOperations.PopCount((uint)othersBlocked) >= 3;
             return !wall;
         }
 

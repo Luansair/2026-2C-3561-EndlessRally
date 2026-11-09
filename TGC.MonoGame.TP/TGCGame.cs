@@ -292,7 +292,7 @@ public class TGCGame : Game
             // Colisiones, coleccionables y despawn de entidades lejanas
             _world.Update(gameTime, _player.Vehicle, _player);
             _roadSpawner.Update(_player.Vehicle.Transform.Position);
-            _traffic.Update(gameTime, _player.CurrentSpeed);
+            _traffic.Update(gameTime, _player.CurrentSpeed, _player.Score);
 
             // Ambiente segun la superficie que hay bajo el auto (suavizado para que no salte de tramo en tramo)
             RoadChunk bajoElAuto = _roadSpawner.GetChunkNear(_player.Vehicle.Transform.Position);
@@ -304,7 +304,7 @@ public class TGCGame : Game
 
             }
 
-            this.Window.Title = "Score: " + _player.Score + " Fuel: " + _player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current;
+            this.Window.Title = "Score: " + _player.Score + " Fuel: " + _player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current + " Difficulty: " + _traffic.dif;
             if (!_player.IsDead) //podria pasarlo al controller como el de lose
             {
                 _soundEffectInstance.Play();
