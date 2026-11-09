@@ -29,6 +29,7 @@ namespace TGC.MonoGame.TP.src.Physics
 
             other.Damageable?.ApplyDamage(_damage);
             _car.Crash(other.Transform.Position);
+            if (_car.frontCrash()) _player.Damageable?.ApplyDamage(500f);
         }
     }
 }

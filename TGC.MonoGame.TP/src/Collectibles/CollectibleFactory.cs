@@ -24,19 +24,19 @@ namespace TGC.MonoGame.TP.src.Collectibles
             CollectibleEffect effect;
             Vector3 collPos = position;
 
-            if (roll < 55) // 45% Moneda/Gema
+            if (roll < 45) // 45% Moneda/Gema
             {
                 model = _assets.Coin;
                 effect = new CollectibleEffect { Score = 10 };
                 collPos.Y -= 1f; 
             }
-            else if (roll < 70) // 25% Nafta
+            else if (roll < 75) // 30% Nafta
             {
                 model = _assets.Fuel;
                 effect = new CollectibleEffect { Fuel = 50.0f };
                 collPos.Y -= 1f; 
             }
-            else if (roll < 85) // 15% Llave inglesa (Reparación)
+            else if (roll < 85) // 10% Llave inglesa (Reparación)
             {
                 model = _assets.Wrench;
                 effect = new CollectibleEffect { Health = 40.0f };

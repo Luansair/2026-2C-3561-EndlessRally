@@ -77,6 +77,8 @@ namespace TGC.MonoGame.TP.src.Core
             return true;
         }
 
+        public bool frontCrash() => Crashed && Math.Abs(_crashSide) < 1f;
+
         /// <summary>El jugador lo choco: sale despedido hacia el lado contrario y deja de colisionar.</summary>
         public void Crash(Vector3 otherPosition)
         {
@@ -85,7 +87,7 @@ namespace TGC.MonoGame.TP.src.Core
             Vehicle.Collider = Collider.None;   // un solo golpe por auto
 
             float side = Vector3.Dot(Vehicle.Transform.Position - otherPosition, _lastRight);
-            _crashSide = side >= 0f ? 1f : -1f;
+            _crashSide = side;
         }
     }
 }
