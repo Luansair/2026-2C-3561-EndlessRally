@@ -39,11 +39,10 @@ namespace TGC.MonoGame.TP.src.Core
         public void Update(GameTime gameTime, KeyboardState keyboard)
         {
             float DeltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            //Modificador de velocidad para que no salga super rapido el auto
             var t = Vehicle.Transform;
             Vector3 startPosition = t.Position;
             var direction = Vector3.Transform(Vector3.Forward, Matrix.CreateRotationY(t.RotationY));
-            float speed = Vehicle.VehicleStats.Acceleration * DeltaTime;
+            float speed = Vehicle.VehicleStats.Acceleration * DeltaTime * 0.65f;
 
             previousKeyboardState = currentKeyboardState;
             currentKeyboardState = Keyboard.GetState();

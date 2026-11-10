@@ -442,7 +442,7 @@ public class TGCGame : Game
         #endregion
 
         #region pass2
-        GraphicsDevice.SetRenderTarget(null);
+        GraphicsDevice.SetRenderTarget(null);//comentar desde aca para ver el shadow map
         GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, new Color(_atmosphere.Sky), 1f, 0);
 
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
@@ -457,13 +457,13 @@ public class TGCGame : Game
         _effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
 
         // Pasamos los parámetros de sombra al BasicShader
-        _effect.Parameters["shadowMap"]?.SetValue(_shadowMapRenderTarget);
+        _effect.Parameters["shadowMap"]?.SetValue(_shadowMapRenderTarget);//shadow map comentar hasta aca
         _effect.Parameters["shadowMapSize"]?.SetValue(Vector2.One * ShadowmapSize);
         _effect.Parameters["LightViewProjection"]?.SetValue(_lightView * _lightProjection);
 
         // Dibujamos el piso y el mundo con sombras
         DrawCustomFloor();
-        _world.Draw(_effect, _followCamera.View, _followCamera.Projection);
+        _world.Draw(_effect, _followCamera.View, _followCamera.Projection); //shadow map comentar esto tambien
 
         // Finalmente el HUD por encima de todo
         DrawHud();

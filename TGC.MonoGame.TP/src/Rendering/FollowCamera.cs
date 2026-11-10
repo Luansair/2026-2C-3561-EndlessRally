@@ -10,11 +10,11 @@ internal class FollowCamera
 {
     // Distancia hacia atrás y hacia arriba respecto al vehículo
     private const float DistanceBack = 11f;
-    private const float DistanceUp = 6f;
+    private const float DistanceUp = 8f;
 
     // Control de interpolación angular
     private const float AngleFollowSpeed = 2.5f; // Ajustado para que acompañe de forma natural
-    private const float AngleThreshold = 0.85f;
+    //private const float AngleThreshold = 0.85f;
 
     private Vector3 _currentBackVector = Vector3.Backward;
     private Vector3 _pastBackVector = Vector3.Backward;
