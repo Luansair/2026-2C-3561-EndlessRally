@@ -69,7 +69,7 @@ namespace TGC.MonoGame.TP
                         Cold = 0f,
                         Ground = new Vector3(0.42f, 0.30f, 0.18f),
                         LightDiffuse = new Vector3(1.0f, 0.92f, 0.80f),
-                        Friction = 0.75f
+                        Friction = 1.25f
                     };
                 case SurfaceType.Snow:
                     return new AtmosphereState
@@ -80,7 +80,7 @@ namespace TGC.MonoGame.TP
                         Cold = 1f,
                         Ground = new Vector3(0.85f, 0.90f, 0.95f),
                         LightDiffuse = new Vector3(0.80f, 0.90f, 1.0f),
-                        Friction = 1.25f
+                        Friction = 1.50f
                     };
                 default: // Asphalt
                     return new AtmosphereState
@@ -91,7 +91,7 @@ namespace TGC.MonoGame.TP
                         Cold = 0f,
                         Ground = new Vector3(0.13f, 0.53f, 0.10f),
                         LightDiffuse = new Vector3(1.0f, 0.98f, 0.92f),
-                        Friction = 1.0f
+                        Friction = 1f
                     };
             }
         }

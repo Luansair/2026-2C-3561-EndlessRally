@@ -150,7 +150,7 @@ public class TGCGame : Game
         foreach (var type in new[] { VehicleType.LightCar, VehicleType.MediumCar, VehicleType.HeavyCar })
         {
             var car = vehiclePresets.Create(type);
-            car.Render.Animator = new WheelExplosion(car.Render.ModelInfo);
+            car.Render.Animator = new CollisionAnimation(car.Render.ModelInfo);
             _vehicles.Add(car);
         }
 
@@ -304,7 +304,7 @@ public class TGCGame : Game
 
             }
 
-            this.Window.Title = "Score: " + _player.Score + " Fuel: " + _player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current + " Difficulty: " + _traffic.dif;
+            this.Window.Title = "Score: " + _player.Score + " Fuel: " + (int)_player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current + " Difficulty: " + _traffic.dif;
             if (!_player.IsDead) //podria pasarlo al controller como el de lose
             {
                 _soundEffectInstance.Play();
@@ -312,6 +312,7 @@ public class TGCGame : Game
             else
             {
                 _soundEffectInstance.Stop();
+                _currentVehicle.Render.Animator = new WheelExplosion(_currentVehicle.Render.ModelInfo);
                 _animTime += elapsedTime;
                 float progress = Math.Clamp(_animTime / DeathAnimationDuration, 0f, 1f);
                 if (_currentVehicle.Render.Animator is WheelExplosion wheels)
@@ -487,11 +488,7 @@ public class TGCGame : Game
         _currentVehicle.Fuel?.Refill(_currentVehicle.Fuel.Max);
         _currentVehicle.Active = true;
         // Reiniciamos las ruedas si explotaron
-        if (_currentVehicle.Render.Animator is WheelExplosion wheels)
-        {
-            wheels.Progress = 0f;
-            wheels.Update(0f);
-        }
+        _currentVehicle.Render.Animator = new CollisionAnimation(_currentVehicle.Render.ModelInfo);
 
         if (volverAlMenu)
         {

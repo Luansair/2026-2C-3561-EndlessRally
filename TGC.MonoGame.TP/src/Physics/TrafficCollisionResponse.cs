@@ -1,5 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Audio;
+using TGC.MonoGame.TP.src.Animation;
 using TGC.MonoGame.TP.src.Core;
+using Microsoft.Xna.Framework;
 
 namespace TGC.MonoGame.TP.src.Physics
 {
@@ -29,6 +31,7 @@ namespace TGC.MonoGame.TP.src.Physics
 
             other.Damageable?.ApplyDamage(_damage);
             _car.Crash(other.Transform.Position);
+            if (other.Render.Animator is CollisionAnimation crashAnim)  crashAnim.StartCrash(Vector3.Normalize(other.Transform.Position - self.Transform.Position));
             if (_car.frontCrash()) _player.Damageable?.ApplyDamage(500f);
         }
     }

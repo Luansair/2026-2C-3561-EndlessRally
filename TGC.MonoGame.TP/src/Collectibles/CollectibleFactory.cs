@@ -54,7 +54,7 @@ namespace TGC.MonoGame.TP.src.Collectibles
                 Render = new RenderModel(model),
                 Collider = new Collider(AABBShape.FromModel(model), isTrigger: true),
                 Collectible = effect,
-                Response = NullCollisionResponse.Instance,
+                Response = new CollectibleCollisionResponse(),
             };
             collectible.Render.Animator = new TransformAnimator
             {

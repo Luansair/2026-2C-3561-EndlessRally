@@ -1,4 +1,6 @@
 ﻿using TGC.MonoGame.TP.src.Core;
+using Microsoft.Xna.Framework;
+using TGC.MonoGame.TP.src.Animation;
 
 namespace TGC.MonoGame.TP.src.Physics
 {
@@ -25,4 +27,11 @@ namespace TGC.MonoGame.TP.src.Physics
             // No hace nada
         }
     }
+    internal class CollectibleCollisionResponse : ICollisionResponse
+    {
+        public void OnCollision(Entity self, Entity other)
+        {
+            if (other.Render.Animator is CollisionAnimation crashAnim)  crashAnim.StartCollect();
+        }
+    }  
 }
