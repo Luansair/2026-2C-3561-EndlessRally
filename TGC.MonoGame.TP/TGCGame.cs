@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
@@ -46,6 +47,8 @@ public class TGCGame : Game
     private SoundEffect _soundEffectLose;
     private SoundEffect _soundEffectHit;
     private SoundEffectInstance _soundEffectInstance;
+    private Song _menuMusic;
+    private Song _gameplayMusic;
     private Effect _hudEffect;
     private AtmosphereState _atmosphere = Atmosphere.Preset(SurfaceType.Asphalt);
 
@@ -214,6 +217,12 @@ public class TGCGame : Game
         _soundEffectHit = Content.Load<SoundEffect>(ContentFolderSounds + "hit");
         _soundEffectInstance = _soundEffectMotor.CreateInstance();
         _soundEffectInstance.IsLooped = true;
+
+        _menuMusic = Content.Load<Song>(ContentFolderMusic + "menu_music");// Nombre exacto de tu archivo en Content
+        _gameplayMusic = Content.Load<Song>(ContentFolderMusic + "game_music");
+        MediaPlayer.IsRepeating = true;
+        MediaPlayer.Volume = 0.4f; //volumen
+        MediaPlayer.Play(_menuMusic);
         base.LoadContent();
     }
 
@@ -257,7 +266,6 @@ public class TGCGame : Game
             if (keyboardState.IsKeyDown(Keys.Enter) && _prevKeyboard.IsKeyUp(Keys.Enter))
             {
 
-
                 _enCarrera = true;
                 _estadoActual = GameState.Playing;
                 //Giro la matriz de mundo del auto, y le aplico una escala para que sea mas acorde al camino
@@ -268,7 +276,10 @@ public class TGCGame : Game
 
                 _player = new PlayerController(_currentVehicle,_soundEffectLose);
                 _world.Add(_currentVehicle);
-
+                if (MediaPlayer.Queue.ActiveSong != _gameplayMusic)
+                {
+                    MediaPlayer.Play(_gameplayMusic);
+                }
                 // Trafico procedural: aparece adelante del jugador (en niebla), circula por los carriles y se borra atras
                 _traffic = new TrafficController(vehiclePresets, _world, _currentVehicle, _roadSpawner,sfx: _soundEffectHit);
             }
@@ -313,6 +324,10 @@ public class TGCGame : Game
             else
             {
                 _soundEffectInstance.Stop();
+                if (MediaPlayer.State == MediaState.Playing)
+                {
+                    MediaPlayer.Stop();
+                }
                 _currentVehicle.Render.Animator = new WheelExplosion(_currentVehicle.Render.ModelInfo);
                 _animTime += elapsedTime;
                 float progress = Math.Clamp(_animTime / DeathAnimationDuration, 0f, 1f);
@@ -498,6 +513,10 @@ public class TGCGame : Game
             _estadoActual = GameState.Menu;
             _currentVehicle.Transform.Position = Vector3.Zero;
             _currentVehicle.Transform.RotationY = 0f;
+            if (MediaPlayer.Queue.ActiveSong != _menuMusic)
+            {
+                MediaPlayer.Play(_menuMusic);
+            }
         }
         else
         {
@@ -518,6 +537,7 @@ public class TGCGame : Game
 
             _enCarrera = true;
             _estadoActual = GameState.Playing;
+            MediaPlayer.Play(_gameplayMusic);
         }
     }
     private void DrawLose()

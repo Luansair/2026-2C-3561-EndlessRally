@@ -2887,6 +2887,18 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/Tree/Tree.fbx
 
+#begin Music/game_music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Music/game_music.mp3
+
+#begin Music/menu_music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Music/menu_music.mp3
+
 #begin Sounds/Boom.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
