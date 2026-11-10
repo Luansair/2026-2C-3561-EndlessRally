@@ -579,9 +579,8 @@ public class TGCGame : Game
 
         GraphicsDevice.DepthStencilState = DepthStencilState.None;
         GraphicsDevice.RasterizerState = RasterizerState.CullNone;
-
         HUD.DrawScore(_hudEffect, GraphicsDevice, _player.Score);
-        HUD.DrawHealth(_hudEffect, GraphicsDevice, (int)_player.CurrentHealth);
+        HUD.DrawHealth(_hudEffect, GraphicsDevice, _player.CurrentHealth/_player.Vehicle.Damageable.Max);
         HUD.DrawFuel(_hudEffect, GraphicsDevice, _player.Vehicle.Fuel.Current, _player.Vehicle.Fuel.Max);
     }
     //Creamos geometria del piso 

@@ -18,7 +18,6 @@ internal class HUD
     public static VertexPositionColor[] CreateHealthBar(Vector2 pos, Vector2 size, float health01)
     {
         var v = new List<VertexPositionColor>();
-        health01 = MathHelper.Clamp(health01, 0f, 1f);
         const int cells = 10;
         float b = size.Y * 0.15f;
 
@@ -29,20 +28,19 @@ internal class HUD
         float iw = size.X - 4 * b, ih = size.Y - 4 * b;
         float gap = b * 0.5f;
         float cw = (iw - gap * (cells - 1)) / cells;
-        int filled = (int)Math.Ceiling(health01 * cells);
+        int filled = (int)(health01 * cells);
         Color on = health01 > 0.5f ? Green : health01 > 0.25f ? Yellow : Red;
-
         for (int i = 0; i < cells; i++)
             Quad(v, x0 + i * (cw + gap), y0, cw, ih, i < filled ? on : Off);
 
         return v.ToArray();
     }
-    public static void DrawHealth(Effect _effect, GraphicsDevice GraphicsDevice, int health)
+    public static void DrawHealth(Effect _effect, GraphicsDevice GraphicsDevice, float health)
     {
         var healthVertices = CreateHealthBar(
             new Vector2(-0.98f, 0.93f),
             new Vector2(0.25f, 0.05f),
-            health01: health / 100f
+            health01: health
         );
 
         foreach (var pass in _effect.CurrentTechnique.Passes)
