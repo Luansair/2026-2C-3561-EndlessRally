@@ -16,7 +16,7 @@ namespace TGC.MonoGame.TP.src.Decorations
 
         // ---- Relleno de curvas (todo en coordenadas locales de la pieza, mismas que CornerPath) ----
         // Distancia del eje del camino al centro de la hilera de barriers
-        private const float CurveBarrierOffset = 10f;
+        private const float CurveBarrierOffset = 12f;
         // Hasta donde se extiende el relleno (medido desde el eje del camino)
         private const float CurveFillDepth = 75f;
         // Donde empiezan las casas (mas lejos que los arboles)
