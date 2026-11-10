@@ -26,7 +26,7 @@ namespace TGC.MonoGame.TP.src.Decorations
             var entity = new Entity
             {
                 Render = new RenderModel(model) { FallbackColor = GetFallbackColor(type) },
-                Collider = new Collider(AABBShape.FromModel(model), isTrigger: false),
+                Collider = new Collider(GetCollisionShape(model, type), isTrigger: false),
                 Response = new DamageResponse(GetDamage(type)),
                 IsMovable = false,
             };
@@ -36,6 +36,14 @@ namespace TGC.MonoGame.TP.src.Decorations
 
             return entity;
         }
+
+        private static ICollisionShape GetCollisionShape(ModelInfo model, DecorationType type) => type switch
+        {
+            // thicknessRatio es el porcentaje respecto al tamaño de la copa, heightRatio porcentaje de la altura
+            DecorationType.Tree => AABBShape.FromTrunk(model, thicknessRatio: 0.10f, heightRatio: 0.5f),
+            DecorationType.Flower => new NullShape(),
+            _ => AABBShape.FromModel(model)
+        };
 
         // Método auxiliar para colores de respaldo cuando el FBX no define materiales válidos
         private static Vector3 GetFallbackColor(DecorationType type) => type switch

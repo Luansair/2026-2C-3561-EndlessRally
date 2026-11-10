@@ -20,6 +20,22 @@ namespace TGC.MonoGame.TP.src.Physics
 
         public static AABBShape FromModel(ModelInfo model) => new AABBShape(model.LocalBounds);
 
+        // thicknessRatio es el porcentaje respecto al tamaño de la copa, heightRatio porcentaje de la altura
+        public static AABBShape FromTrunk(ModelInfo model, float thicknessRatio = 0.25f, float heightRatio = 0.45f)
+        {
+            var b = model.LocalBounds;
+            float centerX = (b.Min.X + b.Max.X) * 0.5f;
+            float centerZ = (b.Min.Z + b.Max.Z) * 0.5f;
+            float halfWidthX = (b.Max.X - b.Min.X) * 0.5f * thicknessRatio;
+            float halfWidthZ = (b.Max.Z - b.Min.Z) * 0.5f * thicknessRatio;
+            float minY = b.Min.Y;
+            float maxY = b.Min.Y + (b.Max.Y - b.Min.Y) * heightRatio;
+            Vector3 trunkMin = new Vector3(centerX - halfWidthX, minY, centerZ - halfWidthZ);
+            Vector3 trunkMax = new Vector3(centerX + halfWidthX, maxY, centerZ + halfWidthZ);
+            
+            return new AABBShape(new BoundingBox(trunkMin, trunkMax));
+        }
+
         private BoundingBox TransformAABB(BoundingBox box, Matrix world)
         {
             var corners = box.GetCorners();

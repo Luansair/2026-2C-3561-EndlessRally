@@ -24,7 +24,7 @@ namespace TGC.MonoGame.TP.src.Road
         private readonly float spawnDistance;
         private readonly float despawnDistance;
         //cantidad maxima para despawn
-        private readonly int maxRoads;
+        //private readonly int maxRoads;
 
         //punto al que tiene que espanear el siguiente camino
         private Vector3 nextPos;
