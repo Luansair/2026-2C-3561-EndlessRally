@@ -16,6 +16,7 @@ namespace TGC.MonoGame.TP.src.Assets
         public ModelInfo Tree { get; init; }
         public IReadOnlyList<ModelInfo> Rocks { get; init; }
         public ModelInfo House { get; init; }
+        public ModelInfo Barrier { get; init; }
     }
 
     public sealed class CarAssets

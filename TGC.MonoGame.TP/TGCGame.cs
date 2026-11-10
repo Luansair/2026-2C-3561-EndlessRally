@@ -165,7 +165,8 @@ public class TGCGame : Game
         var natureRecipes = new List<DecorationGroup> { treesGroup, rocksGroup };
         var houseRecipes = new List<DecorationGroup> { houseGroup };
 
-        var decorationsFactory = new DecorationAreaFactory(natureRecipes, houseRecipes);
+        var barrierGroup = new DecorationGroup(DecorationType.Barrier, 0, [_assets.Decorations.Barrier]);
+        var decorationsFactory = new DecorationAreaFactory(natureRecipes, houseRecipes, barrierGroup);
         var collectibleFactory = new CollectibleFactory(_assets.Collectibles);
         var roadSpawnerFactory = new RoadSpawnerFactory(_assets.Roads, decorationsFactory, collectibleFactory);
 
@@ -463,13 +464,14 @@ public class TGCGame : Game
         Vector3 largadaPos = new Vector3(0f, 0.05f, 0f);
 
         //recrear RoadSpawner
-        var treesGroup = new DecorationGroup(DecorationType.Tree, 10, [_assets.Decorations.Tree]);
-        var rocksGroup = new DecorationGroup(DecorationType.Rock, 15, _assets.Decorations.Rocks);
-        var houseGroup = new DecorationGroup(DecorationType.House, 13, [_assets.Decorations.House]);
+        var treesGroup = new DecorationGroup(DecorationType.Tree, 18, [_assets.Decorations.Tree]);
+        var rocksGroup = new DecorationGroup(DecorationType.Rock, 20, _assets.Decorations.Rocks);
+        var houseGroup = new DecorationGroup(DecorationType.House, 100, [_assets.Decorations.House]);
         var natureRecipes = new List<DecorationGroup> { treesGroup, rocksGroup };
         var houseRecipes = new List<DecorationGroup> { houseGroup };
 
-        var decorationsFactory = new DecorationAreaFactory(natureRecipes, houseRecipes);
+        var barrierGroup = new DecorationGroup(DecorationType.Barrier, 0, [_assets.Decorations.Barrier]);
+        var decorationsFactory = new DecorationAreaFactory(natureRecipes, houseRecipes, barrierGroup);
         var collectibleFactory = new CollectibleFactory(_assets.Collectibles);
         var roadSpawnerFactory = new RoadSpawnerFactory(_assets.Roads, decorationsFactory, collectibleFactory);
 

@@ -9,6 +9,7 @@ namespace TGC.MonoGame.TP.src.Physics
         bool Intersects(ICollisionShape other, Matrix worldA, Matrix worldB);
     }
     // Probably goes in a separate file.
+
     internal class AABBShape : ICollisionShape
     {
         public BoundingBox LocalBox { get; }

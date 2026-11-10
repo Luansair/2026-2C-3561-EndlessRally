@@ -58,7 +58,8 @@ namespace TGC.MonoGame.TP.src.Assets
             var coinModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/gems_monogame/gem3"), 1f);
             var fuelModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/Fuel/gascylinder2"), 1f);
             var wrenchModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/Wrench/Monkey-Wrench2"), 1f);
-            var obstacleModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Coleccionables/Sphere3"), 1f);
+            // ANTES: "Coleccionables/Sphere3" (esfera). Ahora el cono de obra.
+            var obstacleModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Cones/Construction_cone"), 0.02f);
             return new CollectibleAssets
             {
                 Coin = coinModel,
@@ -98,12 +99,14 @@ namespace TGC.MonoGame.TP.src.Assets
             };
 
             var houseModel0 = new ModelInfo(content.Load<Model>(ContentFolder3D + "Building_Big"), 0.02f);
+            var barrierModel = new ModelInfo(content.Load<Model>(ContentFolder3D + "Cones/Jersey_barrier"), 0.015f);
 
             return new DecorationAssets
             {
                 Tree = treeModel0,
                 Rocks = rockModels,
-                House = houseModel0
+                House = houseModel0,
+                Barrier = barrierModel
             };
         }
     }

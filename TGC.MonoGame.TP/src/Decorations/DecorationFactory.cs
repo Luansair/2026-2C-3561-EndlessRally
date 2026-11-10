@@ -16,7 +16,9 @@ namespace TGC.MonoGame.TP.src.Decorations
         Rock,
         Bush,
         Flower,
-        House
+        House,
+        Barrier,
+        Cone
     }
 
     internal class DecorationFactory
@@ -53,6 +55,8 @@ namespace TGC.MonoGame.TP.src.Decorations
             DecorationType.Bush => new Vector3(0.15f, 0.55f, 0.15f),    // Verde arbusto
             DecorationType.Flower => new Vector3(0.95f, 0.30f, 0.35f),  // Tono claro flor
             DecorationType.House => new Vector3(0.85f, 0.80f, 0.75f),   // beige
+            DecorationType.Barrier => new Vector3(0.75f, 0.75f, 0.75f), // hormigon
+            DecorationType.Cone => new Vector3(1.00f, 0.45f, 0.05f),    // naranja
             _ => Vector3.One
         };
 
@@ -63,6 +67,8 @@ namespace TGC.MonoGame.TP.src.Decorations
             DecorationType.Bush => 5f,
             DecorationType.Flower => 0f,
             DecorationType.House => 30f,
+            DecorationType.Barrier => 10f,
+            DecorationType.Cone => 5f,
             _ => 0f
         };
     }

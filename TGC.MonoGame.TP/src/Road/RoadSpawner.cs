@@ -24,7 +24,7 @@ namespace TGC.MonoGame.TP.src.Road
         private readonly float spawnDistance;
         private readonly float despawnDistance;
         //cantidad maxima para despawn
-        //private readonly int maxRoads;
+        private readonly int maxRoads;
 
         //punto al que tiene que espanear el siguiente camino
         private Vector3 nextPos;
@@ -401,6 +401,9 @@ namespace TGC.MonoGame.TP.src.Road
 
             var decorationArea = _decorationFactory.CreateFor(def, _chunksGenerados);
             var decorations = decorationArea.Generate();
+            // En curvas: barriers siguiendo el arco + arboles/casas detras
+            if (def.rotacionY != 0f)
+                decorations.AddRange(_decorationFactory.CreateCurveFill(def, _chunksGenerados));
 
             var chunk = new RoadChunk(roadEntity, decorations, roadEntity.Surface, typeNow);
             chunk.StartDistance = _generatedDistance;

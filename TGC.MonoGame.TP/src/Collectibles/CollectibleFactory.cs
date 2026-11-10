@@ -56,12 +56,16 @@ namespace TGC.MonoGame.TP.src.Collectibles
                 Collectible = effect,
                 Response = new CollectibleCollisionResponse(),
             };
-            collectible.Render.Animator = new TransformAnimator
+            // El cono (obstaculo) queda quieto apoyado en el piso; el resto gira y flota
+            if (model != _assets.Obstacle)
             {
-                RotationSpeed = 2f,     // qué tan rápido gira
-                BobbingAmplitude = 0.7f, // qué tanto sube y baja
-                BobbingSpeed = 2.0f       // frecuencia del rebote
-            };
+                collectible.Render.Animator = new TransformAnimator
+                {
+                    RotationSpeed = 2f,     // qué tan rápido gira
+                    BobbingAmplitude = 0.7f, // qué tanto sube y baja
+                    BobbingSpeed = 2.0f       // frecuencia del rebote
+                };
+            }
             collectible.Transform.Scale = model.Scale;
             collectible.Transform.Position = collPos;
             collectible.isCollectible = true;
