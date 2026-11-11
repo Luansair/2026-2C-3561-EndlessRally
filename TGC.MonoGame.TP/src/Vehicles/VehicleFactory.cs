@@ -12,7 +12,7 @@ namespace TGC.MonoGame.TP.src.Vehicles
             var vehicle = new Entity
             {
                 Render = new RenderModel(model),
-                Collider = new Collider(AABBShape.FromModel(model)),
+                Collider = new Collider(AABBShape.FromCar(model)),
                 Damageable = new Damageable(health),
                 Fuel = new Fuel(fuel),
                 VehicleStats = new VehicleStats 

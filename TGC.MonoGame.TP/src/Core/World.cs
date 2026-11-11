@@ -66,6 +66,14 @@ namespace TGC.MonoGame.TP.src.Core
                 var box = e.Collider.Shape.LocalBox;
                 GizmoPrimitives.DrawBoundingBox(effect.GraphicsDevice, effect, box.Min, box.Max,
                     e.Transform.World, view, proj, Color.Blue);
+                
+                var corners = box.GetCorners();
+                for (int i = 0; i < corners.Length; i++)
+                    corners[i] = Vector3.Transform(corners[i], e.Transform.World);
+                var worldAABB = BoundingBox.CreateFromPoints(corners);
+
+                GizmoPrimitives.DrawBoundingBox(effect.GraphicsDevice, effect, worldAABB.Min, worldAABB.Max,
+                    Matrix.Identity, view, proj, Color.Red);
             }
         }
 
