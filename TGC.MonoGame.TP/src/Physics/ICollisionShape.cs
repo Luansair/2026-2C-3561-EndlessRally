@@ -54,39 +54,16 @@ namespace TGC.MonoGame.TP.src.Physics
             ));
         }
 
-        private BoundingBox TransformAABB(BoundingBox box, Matrix world)
-        {
-            var corners = box.GetCorners();
-            for (int i = 0; i < corners.Length; i++)
-                corners[i] = Vector3.Transform(corners[i], world);
-            return BoundingBox.CreateFromPoints(corners);
-        }
-
+        // La hitbox se convierte a una caja orientada (OBB) en mundo: rota con el modelo y no se agranda.
         public bool Intersects(ICollisionShape other, Matrix worldA, Matrix worldB)
         {
-            // Si uno de los dos es un tronco o cilindro, medimos la distancia real en el plano XZ
-            Vector3 posA = worldA.Translation;
-            Vector3 posB = worldB.Translation;
-
-            // Distancia plana (X y Z) entre el auto y el árbol
-            float dx = posA.X - posB.X;
-            float dz = posA.Z - posB.Z;
-            float distSquared = dx * dx + dz * dz;
-
-            // Radio aproximado del auto (~1.5m) + radio del tronco (~0.6m) = ~2.1m
-            // Si la distancia es mayor a 2.5 metros, es imposible que se toquen
-            float radioColision = 2.2f;
-            if (distSquared > radioColision * radioColision)
-                return false;
-
-            // Si están cerca en el plano horizontal, verificamos altura Y con el AABB
-            var worldBoxA = TransformAABB(LocalBox, worldA);
             if (other is AABBShape aabb)
             {
-                var worldBoxB = TransformAABB(aabb.LocalBox, worldB);
-                return worldBoxA.Intersects(worldBoxB);
+                var obbA = OrientedBoundingBox.FromLocalBox(LocalBox, worldA);
+                var obbB = OrientedBoundingBox.FromLocalBox(aabb.LocalBox, worldB);
+                return obbA.Intersects(obbB);
             }
-            return false;
+            return false;  // Other types of collision shapes can be handled here in the future.
         }
     }
 

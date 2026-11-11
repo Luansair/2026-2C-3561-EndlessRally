@@ -24,33 +24,15 @@ namespace TGC.MonoGame.TP.src.Physics
         {
             if (self.Collider == null || other.Collider == null)
                 return false;
+            if (other.Collider.Shape is NullShape) return false;
 
-            var otherBox = other.Collider.Shape.LocalBox;
-            var selfCorners = self.Collider.Shape.LocalBox.GetCorners();
-            var otherWorldInverse = Matrix.Invert(other.Transform.World);
+            // Zona frontal (25% delantero) de la caja del otro, en su espacio local.
+            // Se testea como OBB contra OBB, asi la rotacion relativa no agranda la zona.
+            var ob = other.Collider.Shape.LocalBox;
+            float frontEndZ = ob.Min.Z + (ob.Max.Z - ob.Min.Z) * 0.25f;
+            var frontZone = new AABBShape(new BoundingBox(ob.Min, new Vector3(ob.Max.X, ob.Max.Y, frontEndZ)));
 
-            Vector3 selfMin = Vector3.Zero;
-            Vector3 selfMax = Vector3.Zero;
-            for (int i = 0; i < selfCorners.Length; i++)
-            {
-                var worldCorner = Vector3.Transform(selfCorners[i], self.Transform.World);
-                var otherLocalCorner = Vector3.Transform(worldCorner, otherWorldInverse);
-                if (i == 0)
-                {
-                    selfMin = otherLocalCorner;
-                    selfMax = otherLocalCorner;
-                }
-                else
-                {
-                    selfMin = Vector3.Min(selfMin, otherLocalCorner);
-                    selfMax = Vector3.Max(selfMax, otherLocalCorner);
-                }
-            }
-            bool overlapsWidth = selfMax.X >= otherBox.Min.X && selfMin.X <= otherBox.Max.X;
-            bool overlapsHeight = selfMax.Y >= otherBox.Min.Y && selfMin.Y <= otherBox.Max.Y;
-            float frontEndZ = otherBox.Min.Z + (otherBox.Max.Z - otherBox.Min.Z) * 0.25f;
-            bool overlapsFront = selfMax.Z >= otherBox.Min.Z && selfMin.Z <= frontEndZ;
-            return overlapsWidth && overlapsHeight && overlapsFront;
+            return self.Collider.Shape.Intersects(frontZone, self.Transform.World, other.Transform.World);
         }
     }
     internal class NullCollisionResponse : ICollisionResponse
