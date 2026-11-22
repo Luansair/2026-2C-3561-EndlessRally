@@ -39,7 +39,7 @@ public class TGCGame : Game
 
     private Effect _effect;
     private Effect _shadowEffect;
-    private const int ShadowmapSize = 2048;
+    private const int ShadowmapSize = 4096;
     private RenderTarget2D _shadowMapRenderTarget;
     private Matrix _lightView;
     private Matrix _lightProjection;
@@ -208,7 +208,7 @@ public class TGCGame : Game
         );
 
         // Caja de visión de la luz
-        _lightProjection = Matrix.CreateOrthographic(300f, 300f, 350f, 1150f);
+        _lightProjection = Matrix.CreateOrthographic(230f, 230f, 380f, 1000f);
 
         _roadSpawner = roadSpawnerFactory.Create(spawnerConfig, _world); //Prueba
 
@@ -287,11 +287,17 @@ public class TGCGame : Game
         else if (_estadoActual == GameState.Playing)
         {
             Vector3 carPos = _player.Vehicle.Transform.Position;
-            Vector3 lightOffset = new Vector3(400f, 500f, 400f);
-            Vector3 lightPosition = carPos + lightOffset;
+            Vector3 forward = _player.Vehicle.Transform.World.Forward;
+            
+            // 1. Punto de enfoque 35 unidades por delante del auto
+            Vector3 focusPoint = carPos + forward * 100f;
 
-            // La cámara de la luz se ubica en lightPosition y mira hacia el auto
-            _lightView = Matrix.CreateLookAt(lightPosition, carPos, Vector3.Up);
+            // 2. Ubicamos la luz manteniendo el mismo ángulo respecto al punto de enfoque
+            Vector3 lightOffset = new Vector3(400f, 600f, 400f);
+            Vector3 lightPosition = focusPoint + lightOffset;
+
+            // 3. La cámara de la luz ahora mira hacia focusPoint en lugar de carPos
+            _lightView = Matrix.CreateLookAt(lightPosition, focusPoint, Vector3.Up);
 
             _effect.Parameters["lightPosition"]?.SetValue(lightPosition);
             _effect.Parameters["eyePosition"]?.SetValue(_followCamera.Position);

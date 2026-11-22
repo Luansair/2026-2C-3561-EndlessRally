@@ -98,7 +98,6 @@ struct VertexShaderOutput
     float4 WorldPosition : TEXCOORD1;
     float4 Normal : TEXCOORD2;
     float4 VertexColor : COLOR0;
-    float4 LightSpacePosition : TEXCOORD3;
 };
 
 VertexShaderOutput MainVS(in VertexShaderInput input)
@@ -108,7 +107,6 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
     // Model space to World space
     float4 worldPosition = mul(input.Position, World);
 	output.WorldPosition = worldPosition;
-    output.LightSpacePosition = mul(worldPosition, LightViewProjection);
     // World space to View space
     float4 viewPosition = mul(worldPosition, View);	
 	// View space to Projection space
@@ -135,10 +133,12 @@ float3 SurfaceAlbedo(float type, float3 baseColor)
 }
 
 //cálculo de sombras
-float CalculateShadowPCF(float4 lightSpacePos, float3 normal, float3 lightDir)
+float CalculateShadowPCF(float3 worldPos, float3 normal, float3 lightDir)
 {
     if (shadowMapSize.x <= 0.0f) return 1.0f; //para evitar que intente meter sombras en el menu
+    float4 lightSpacePos = mul(float4(worldPos, 1.0f), LightViewProjection);
     float3 lightSpacePosition = lightSpacePos.xyz / lightSpacePos.w;
+
     float2 shadowCoords = 0.5f * lightSpacePosition.xy + float2(0.5f, 0.5f);
     shadowCoords.y = 1.0f - shadowCoords.y;
 
@@ -211,7 +211,7 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     litColor *= lerp(float3(1.0, 1.0, 1.0), ColdTint, ColdAmount);
 
     // Calculamos el factor de sombra
-    float shadowFactor = CalculateShadowPCF(input.LightSpacePosition, normal, lightDirection);
+    float shadowFactor = CalculateShadowPCF(input.WorldPosition.xyz, normal, lightDirection);
 
     // La sombra bloquea la luz difusa y especular, pero respeta la luz ambiente
     ambientLight = lightAmbientColor * KAmbient;
