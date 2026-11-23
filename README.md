@@ -26,12 +26,10 @@ TGC, Tgcito  |  Apellido, Nombre
 
 ## Capturas
 
-![screenshot1](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot2](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot3](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot4](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot5](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
+![screenshot1](https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/cap%201.png)
+![screenshot2](https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/cap%202.png)
+![screenshot3](https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/cap%203.png)
 
 ## Game Play
 
-[![Watch the video](https://img.youtube.com/vi/pgEwUC0jvH4/0.jpg)](https://www.youtube.com/playlist?list=PLRM4L32DjvnazuMl8wZlbpEYL5Qh63ulG)
+[![Watch the video](https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/cap%201.png))](https://drive.google.com/file/d/1qWIY8ubnSupleZcciahsFC0S_67yd8_Y/view?usp=drive_link)
