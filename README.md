@@ -26,7 +26,7 @@ Teclas: A,D para girar - S freno
 
 Diaz Frutos, Gonzalo  |  Calbi, Matteo | Rodriguez, Ariel
 ------------ | -------------
-| <img src="https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/int%201.png" height="500"> | <img src="https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/int%202.jp)" height="500"> | <img src="https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/int.png" height="500">
+| <img src="https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/int%201.png" height="500"> | <img src="https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/int%202.jpg" height="500"> | <img src="https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/int.png" height="500">
 
 ## Capturas
 
