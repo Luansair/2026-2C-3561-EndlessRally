@@ -12,6 +12,98 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Content\bin\DesktopGL\Content\Models\Plant\**" />
+    <Compile Remove="Content\bin\DesktopGL\Content\Models\Sign\**" />
+    <Compile Remove="Content\bin\DesktopGL\Models\Car\**" />
+    <Compile Remove="Content\bin\DesktopGL\Models\Kenney_Cars\**" />
+    <Compile Remove="Content\bin\DesktopGL\Models\Plant\**" />
+    <Compile Remove="Content\bin\DesktopGL\Models\Sign\**" />
+    <Compile Remove="Content\Models\Tree\.mayaSwatches\**" />
+    <Compile Remove="Content\Models\Tree\Tree.fbm\.mayaSwatches\**" />
+    <Compile Remove="Content\obj\DesktopGL\Models\Car\**" />
+    <Compile Remove="Content\obj\DesktopGL\Models\Kenney_Cars\**" />
+    <Compile Remove="Content\obj\DesktopGL\Models\Plant\**" />
+    <Compile Remove="Content\obj\DesktopGL\Models\Sign\**" />
+    <Compile Remove="Content\obj\DesktopGL\net8.0\Content\Models\Plant\**" />
+    <Compile Remove="Content\obj\DesktopGL\net8.0\Content\Models\Sign\**" />
+    <Compile Remove="Content\bin\DesktopGL\Content\Models\Plant\**" />
+    <Compile Remove="Content\bin\DesktopGL\Content\Models\Sign\**" />
+    <Compile Remove="Content\bin\DesktopGL\Models\Car\**" />
+    <Compile Remove="Content\bin\DesktopGL\Models\Kenney_Cars\**" />
+    <Compile Remove="Content\bin\DesktopGL\Models\Plant\**" />
+    <Compile Remove="Content\bin\DesktopGL\Models\Sign\**" />
+    <Compile Remove="Content\Models\Tree\.mayaSwatches\**" />
+    <Compile Remove="Content\Models\Tree\Tree.fbm\.mayaSwatches\**" />
+    <Compile Remove="Content\obj\DesktopGL\Models\Car\**" />
+    <Compile Remove="Content\obj\DesktopGL\Models\Kenney_Cars\**" />
+    <Compile Remove="Content\obj\DesktopGL\Models\Plant\**" />
+    <Compile Remove="Content\obj\DesktopGL\Models\Sign\**" />
+    <Compile Remove="Content\obj\DesktopGL\net8.0\Content\Models\Plant\**" />
+    <Compile Remove="Content\obj\DesktopGL\net8.0\Content\Models\Sign\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Content\Models\Plant\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Content\Models\Sign\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Models\Car\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Models\Kenney_Cars\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Models\Plant\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Models\Sign\**" />
+    <EmbeddedResource Remove="Content\Models\Tree\.mayaSwatches\**" />
+    <EmbeddedResource Remove="Content\Models\Tree\Tree.fbm\.mayaSwatches\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\Models\Car\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\Models\Kenney_Cars\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\Models\Plant\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\Models\Sign\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\net8.0\Content\Models\Plant\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\net8.0\Content\Models\Sign\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Content\Models\Plant\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Content\Models\Sign\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Models\Car\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Models\Kenney_Cars\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Models\Plant\**" />
+    <EmbeddedResource Remove="Content\bin\DesktopGL\Models\Sign\**" />
+    <EmbeddedResource Remove="Content\Models\Tree\.mayaSwatches\**" />
+    <EmbeddedResource Remove="Content\Models\Tree\Tree.fbm\.mayaSwatches\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\Models\Car\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\Models\Kenney_Cars\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\Models\Plant\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\Models\Sign\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\net8.0\Content\Models\Plant\**" />
+    <EmbeddedResource Remove="Content\obj\DesktopGL\net8.0\Content\Models\Sign\**" />
+    <None Remove="Content\bin\DesktopGL\Content\Models\Plant\**" />
+    <None Remove="Content\bin\DesktopGL\Content\Models\Sign\**" />
+    <None Remove="Content\bin\DesktopGL\Models\Car\**" />
+    <None Remove="Content\bin\DesktopGL\Models\Kenney_Cars\**" />
+    <None Remove="Content\bin\DesktopGL\Models\Plant\**" />
+    <None Remove="Content\bin\DesktopGL\Models\Sign\**" />
+    <None Remove="Content\Models\Tree\.mayaSwatches\**" />
+    <None Remove="Content\Models\Tree\Tree.fbm\.mayaSwatches\**" />
+    <None Remove="Content\obj\DesktopGL\Models\Car\**" />
+    <None Remove="Content\obj\DesktopGL\Models\Kenney_Cars\**" />
+    <None Remove="Content\obj\DesktopGL\Models\Plant\**" />
+    <None Remove="Content\obj\DesktopGL\Models\Sign\**" />
+    <None Remove="Content\obj\DesktopGL\net8.0\Content\Models\Plant\**" />
+    <None Remove="Content\obj\DesktopGL\net8.0\Content\Models\Sign\**" />
+    <None Remove="Content\bin\DesktopGL\Content\Models\Plant\**" />
+    <None Remove="Content\bin\DesktopGL\Content\Models\Sign\**" />
+    <None Remove="Content\bin\DesktopGL\Models\Car\**" />
+    <None Remove="Content\bin\DesktopGL\Models\Kenney_Cars\**" />
+    <None Remove="Content\bin\DesktopGL\Models\Plant\**" />
+    <None Remove="Content\bin\DesktopGL\Models\Sign\**" />
+    <None Remove="Content\Models\Tree\.mayaSwatches\**" />
+    <None Remove="Content\Models\Tree\Tree.fbm\.mayaSwatches\**" />
+    <None Remove="Content\obj\DesktopGL\Models\Car\**" />
+    <None Remove="Content\obj\DesktopGL\Models\Kenney_Cars\**" />
+    <None Remove="Content\obj\DesktopGL\Models\Plant\**" />
+    <None Remove="Content\obj\DesktopGL\Models\Sign\**" />
+    <None Remove="Content\obj\DesktopGL\net8.0\Content\Models\Plant\**" />
+    <None Remove="Content\obj\DesktopGL\net8.0\Content\Models\Sign\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="src\Legacy\Coleccionables.cs" />
+    <Compile Remove="src\Legacy\Forest.cs" />
+    <Compile Remove="src\Legacy\Track.cs" />
+    <Compile Remove="src\Legacy\Vehiculo.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="Icon.ico" />
     <None Remove="Icon.bmp" />
   </ItemGroup>
@@ -30,6 +122,10 @@
     <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Content\Sounds\" />
+    <Folder Include="src\Legacy\" />
   </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="CollectPackageReferences">
     <Message Text="Restoring dotnet tools" Importance="High" />

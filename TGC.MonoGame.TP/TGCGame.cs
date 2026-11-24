@@ -1,7 +1,19 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.Collections.Generic;
+using TGC.MonoGame.TP.src.Animation;
+using TGC.MonoGame.TP.src.Assets;
+using TGC.MonoGame.TP.src.Collectibles;
+using TGC.MonoGame.TP.src.Core;
+using TGC.MonoGame.TP.src.Decorations;
+using TGC.MonoGame.TP.src.Menu;
+using TGC.MonoGame.TP.src.Rendering;
+using TGC.MonoGame.TP.src.Road;
+using TGC.MonoGame.TP.src.Vehicles;
 
 namespace TGC.MonoGame.TP;
 
@@ -14,20 +26,68 @@ public class TGCGame : Game
 {
     public const string ContentFolder3D = "Models/";
     public const string ContentFolderEffects = "Effects/";
+    // Tambien define hasta donde llega la niebla (Atmosphere.Apply)
+    private const float SpawnDistance = 400f;
+    private const float DespawnDistance = 600f;
     public const string ContentFolderMusic = "Music/";
     public const string ContentFolderSounds = "Sounds/";
     public const string ContentFolderSpriteFonts = "SpriteFonts/";
     public const string ContentFolderTextures = "Textures/";
     
     private readonly GraphicsDeviceManager _graphics;
+    private GameAssets _assets;
 
     private Effect _effect;
-    private Model _model;
-    private Matrix _projection;
-    private float _rotation;
+    private Effect _shadowEffect;
+    private const int ShadowmapSize = 4096;
+    private RenderTarget2D _shadowMapRenderTarget;
+    private Matrix _lightView;
+    private Matrix _lightProjection;
+    private SoundEffect _soundEffectMotor;
+    private SoundEffect _soundEffectLose;
+    private SoundEffect _soundEffectHit;
+    private SoundEffectInstance _soundEffectInstance;
+    private Song _menuMusic;
+    private Song _gameplayMusic;
+    private Effect _hudEffect;
+    private AtmosphereState _atmosphere = Atmosphere.Preset(SurfaceType.Asphalt);
+
+    // Una camara
+    private FollowCamera _followCamera;
+
     private SpriteBatch _spriteBatch;
-    private Matrix _view;
-    private Matrix _world;
+
+    private Random _random;
+    private const int SEED = 0;
+
+
+    //definimos estados de juego (menu, playing, paused)
+    public enum GameState
+    {
+        Menu,
+        Playing,
+        Paused,
+        Lose
+    }
+
+    private GameState _estadoActual = GameState.Menu;
+    private const float DeathAnimationDuration = 2.5f;
+    private Entity _currentVehicle;
+    private PlayerController _player;
+    private TrafficController _traffic;
+    private World _world;
+    private VehicleCarrousel _vehicles;
+    private bool _enCarrera = false;
+    private KeyboardState _prevKeyboard;
+
+    //pantalla de menu
+    private SpriteFont _font;
+    private float _menuCarYaw = 30f;
+    public static Texture2D DefaultTexture { get; private set; }
+
+    // Geometría del piso (vertices e indices)
+    private VertexPositionNormalTexture[] _floorVertices;
+    private short[] _floorIndices;
 
     /// <summary>
     ///     Constructor del juego.
@@ -40,10 +100,7 @@ public class TGCGame : Game
         _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
         _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
 
-        // Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
-        // Carpeta raiz donde va a estar toda la Media.
         Content.RootDirectory = "Content";
-        // Hace que el mouse sea visible.
         IsMouseVisible = true;
     }
 
@@ -54,52 +111,118 @@ public class TGCGame : Game
     protected override void Initialize()
     {
         // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
-
-        // Apago el backface culling.
-        // Esto se hace por un problema en el diseno del modelo del logo de la materia.
-        // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
-        var rasterizerState = new RasterizerState();
-        rasterizerState.CullMode = CullMode.None;
-        GraphicsDevice.RasterizerState = rasterizerState;
-        // Seria hasta aca.
-
-        // Configuramos nuestras matrices de la escena.
-        _world = Matrix.Identity;
-        _view = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
-        _projection =
-            Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
-
+        //creo una camara para seguir a un _vehiculoActual
+        _followCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
+        
+        //crea el piso con un determinado tamaño
+        CreateFloorGeometry(50000f);
         base.Initialize();
     }
 
-    /// <summary>
+    RoadSpawner _roadSpawner;
+
     ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
     ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
     ///     que podemos pre calcular para nuestro juego.
     /// </summary>
+    private float _animTime;
     protected override void LoadContent()
     {
-        // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
+        // Carga de cosas del menu supongo
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+        _font = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "DefaultFont");
 
-        // Cargo el modelo del logo.
-        _model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
-
-        // Cargo un efecto basico propio declarado en el Content pipeline.
-        // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
+        DefaultTexture = new Texture2D(GraphicsDevice, 1, 1);
+        DefaultTexture.SetData(new[] { Color.White });
+        
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+        LightManager.ApplyDefaults(_effect);
 
-        // Asigno el efecto que cargue a cada parte del mesh.
-        // Un modelo puede tener mas de 1 mesh internamente.
-        foreach (var mesh in _model.Meshes)
+        _hudEffect = Content.Load<Effect>(ContentFolderEffects + "HudShader");
+        //LightManager.ApplyDefaults(_hudEffect);
+
+        _shadowEffect = Content.Load<Effect>(ContentFolderEffects + "ShadowMap");
+
+        // Carga de assets
+        var contentLoader = new GameContentLoader();
+        _assets = contentLoader.Load(Content, GraphicsDevice);
+
+        // Carga de opciones de vehiculos
+        var vehiclePresets = new VehiclePresets(_assets.Cars);
+        _vehicles = new VehicleCarrousel();
+        foreach (var type in new[] { VehicleType.LightCar, VehicleType.MediumCar, VehicleType.HeavyCar })
         {
-            // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
-            foreach (var meshPart in mesh.MeshParts)
+            var car = vehiclePresets.Create(type);
+            car.Render.Animator = new CollisionAnimation(car.Render.ModelInfo);
+            _vehicles.Add(car);
+        }
+
+        _currentVehicle = _vehicles.GetCurrent();
+        // Configuracion de factories para crear entidades
+        _random = new Random(SEED);
+
+        var treesGroup = new DecorationGroup(DecorationType.Tree, 10, [_assets.Decorations.Tree]);
+        var rocksGroup = new DecorationGroup(DecorationType.Rock, 15, _assets.Decorations.Rocks);
+        var houseGroup = new DecorationGroup(DecorationType.House, 13, [_assets.Decorations.House]);
+
+        var natureRecipes = new List<DecorationGroup> { treesGroup, rocksGroup };
+        var houseRecipes = new List<DecorationGroup> { houseGroup };
+
+        var barrierGroup = new DecorationGroup(DecorationType.Barrier, 0, [_assets.Decorations.Barrier]);
+        var decorationsFactory = new DecorationAreaFactory(natureRecipes, houseRecipes, barrierGroup);
+        var collectibleFactory = new CollectibleFactory(_assets.Collectibles);
+        var roadSpawnerFactory = new RoadSpawnerFactory(_assets.Roads, decorationsFactory, collectibleFactory);
+
+        // ??
+        foreach (var coll in new ModelInfo[] { _assets.Collectibles.Wrench, _assets.Collectibles.Coin, _assets.Collectibles.Fuel, _assets.Collectibles.Obstacle })
+        {
+            foreach (var mesh in coll.Model.Meshes)
             {
-                meshPart.Effect = _effect;
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = _effect;
+                }
             }
         }
 
+        // Creacion de mundo y road spawner
+        _world = new World();
+        var spawnerConfig = new RoadSpawnerConfig
+        {
+            StartPosition = new Vector3(0f, 0.05f, 0f),
+            SpawnDistance = SpawnDistance,
+            DespawnDistance = DespawnDistance,
+            InitialSegmentCount = 100
+        };
+
+        //Inicializo el renderTarget
+        _shadowMapRenderTarget = new RenderTarget2D(
+            GraphicsDevice,
+            ShadowmapSize,
+            ShadowmapSize,
+            false,
+            SurfaceFormat.Single,
+            DepthFormat.Depth24,
+            0,
+            RenderTargetUsage.PlatformContents
+        );
+
+        // Caja de visión de la luz
+        _lightProjection = Matrix.CreateOrthographic(230f, 230f, 380f, 1000f);
+
+        _roadSpawner = roadSpawnerFactory.Create(spawnerConfig, _world); //Prueba
+
+        _soundEffectMotor = Content.Load<SoundEffect>(ContentFolderSounds + "motor");
+        _soundEffectLose = Content.Load<SoundEffect>(ContentFolderSounds + "lose");
+        _soundEffectHit = Content.Load<SoundEffect>(ContentFolderSounds + "hit");
+        _soundEffectInstance = _soundEffectMotor.CreateInstance();
+        _soundEffectInstance.IsLooped = true;
+
+        _menuMusic = Content.Load<Song>(ContentFolderMusic + "menu_music");// Nombre exacto de tu archivo en Content
+        _gameplayMusic = Content.Load<Song>(ContentFolderMusic + "game_music");
+        MediaPlayer.IsRepeating = true;
+        MediaPlayer.Volume = 0.4f; //volumen
+        MediaPlayer.Play(_menuMusic);
         base.LoadContent();
     }
 
@@ -110,41 +233,397 @@ public class TGCGame : Game
     /// </summary>
     protected override void Update(GameTime gameTime)
     {
-        // Aca deberiamos poner toda la logica de actualizacion del juego.
+        float elapsedTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
+        var keyboardState = Keyboard.GetState();
+        var vehiclePresets = new VehiclePresets(_assets.Cars);
 
-        // Capturar Input teclado
-        if (Keyboard.GetState().IsKeyDown(Keys.Escape))
+        if (keyboardState.IsKeyDown(Keys.Escape))
         {
             //Salgo del juego.
             Exit();
         }
+        if (keyboardState.IsKeyDown(Keys.F1) && _prevKeyboard.IsKeyUp(Keys.F1))
+        {
+            _world.DebugBounds = !_world.DebugBounds;
+        }
+        
+        // Menu de seleccion
+        if (!_enCarrera)
+        {
+            _menuCarYaw += elapsedTime * 1.5f;
+            
+            // Cambiar de auto con flechas
+            if (keyboardState.IsKeyDown(Keys.Right) && _prevKeyboard.IsKeyUp(Keys.Right))
+            {
+                _currentVehicle = _vehicles.GetNext();
+            }
+            if (keyboardState.IsKeyDown(Keys.Left) && _prevKeyboard.IsKeyUp(Keys.Left))
+            {
+                _currentVehicle = _vehicles.GetPrev();
+            }
 
-        // Basado en el tiempo que paso se va generando una rotacion.
-        _rotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+            // comenzar
+            if (keyboardState.IsKeyDown(Keys.Enter) && _prevKeyboard.IsKeyUp(Keys.Enter))
+            {
 
-        _world = Matrix.CreateRotationY(_rotation);
+                _enCarrera = true;
+                _estadoActual = GameState.Playing;
+                //Giro la matriz de mundo del auto, y le aplico una escala para que sea mas acorde al camino
+                // si no hay que modificar la escala del camino
+                _currentVehicle.Transform.RotationY = MathHelper.ToRadians(180f);
+                _currentVehicle.Transform.Scale = 0.008f;
+                _followCamera.Update(gameTime, _currentVehicle.Transform.World);
+
+                _player = new PlayerController(_currentVehicle,_soundEffectLose);
+                _world.Add(_currentVehicle);
+                if (MediaPlayer.Queue.ActiveSong != _gameplayMusic)
+                {
+                    MediaPlayer.Play(_gameplayMusic);
+                }
+                // Trafico procedural: aparece adelante del jugador (en niebla), circula por los carriles y se borra atras
+                _traffic = new TrafficController(vehiclePresets, _world, _currentVehicle, _roadSpawner,sfx: _soundEffectHit);
+            }
+        }
+        else if (_estadoActual == GameState.Playing)
+        {
+            Vector3 carPos = _player.Vehicle.Transform.Position;
+            Vector3 forward = _player.Vehicle.Transform.World.Forward;
+            
+            // 1. Punto de enfoque 35 unidades por delante del auto
+            Vector3 focusPoint = carPos + forward * 100f;
+
+            // 2. Ubicamos la luz manteniendo el mismo ángulo respecto al punto de enfoque
+            Vector3 lightOffset = new Vector3(400f, 600f, 400f);
+            Vector3 lightPosition = focusPoint + lightOffset;
+
+            // 3. La cámara de la luz ahora mira hacia focusPoint en lugar de carPos
+            _lightView = Matrix.CreateLookAt(lightPosition, focusPoint, Vector3.Up);
+
+            _effect.Parameters["lightPosition"]?.SetValue(lightPosition);
+            _effect.Parameters["eyePosition"]?.SetValue(_followCamera.Position);
+
+            // Todo el movimiento se delega a la clase
+            _player.CurrentFriction = _atmosphere.Friction;
+            _player.Update(gameTime, keyboardState); 
+            _followCamera.Update(gameTime, _player.Vehicle.Transform.World);
+
+            // Colisiones, coleccionables y despawn de entidades lejanas
+            _world.Update(gameTime, _player.Vehicle, _player);
+            _roadSpawner.Update(_player.Vehicle.Transform.Position);
+            _traffic.Update(gameTime, _player.CurrentSpeed, _player.Score);
+
+            // Ambiente segun la superficie que hay bajo el auto (suavizado para que no salte de tramo en tramo)
+            RoadChunk bajoElAuto = _roadSpawner.GetChunkNear(_player.Vehicle.Transform.Position);
+            if (bajoElAuto != null)
+            {
+                AtmosphereState objetivo = Atmosphere.Sample(bajoElAuto.Blend);
+                float suavizado = 1f - MathF.Exp(-3f * elapsedTime);
+                _atmosphere = Atmosphere.Lerp(_atmosphere, objetivo, suavizado);
+
+            }
+
+            this.Window.Title = "Score: " + _player.Score + " Fuel: " + (int)_player.Vehicle.Fuel.Current + " Health: " + _player.Vehicle.Damageable.Current + " Difficulty: " + _traffic.dif;
+            if (!_player.IsDead) //podria pasarlo al controller como el de lose
+            {
+                _soundEffectInstance.Play();
+            }
+            else
+            {
+                _soundEffectInstance.Stop();
+                if (MediaPlayer.State == MediaState.Playing)
+                {
+                    MediaPlayer.Stop();
+                }
+                _currentVehicle.Render.Animator = new WheelExplosion(_currentVehicle.Render.ModelInfo);
+                _animTime += elapsedTime;
+                float progress = Math.Clamp(_animTime / DeathAnimationDuration, 0f, 1f);
+                if (_currentVehicle.Render.Animator is WheelExplosion wheels)
+                {
+                    // ida y vuelta suave cada 6 s
+                    wheels.Progress = progress;//  0.5f + 0.5f * _animTime;// MathF.Cos( * MathHelper.TwoPi / 6f);
+                    wheels.Update(elapsedTime);
+                }
+                _followCamera.Update(gameTime, _player.Vehicle.Transform.World);
+                if (_animTime >= DeathAnimationDuration)
+                {
+                    _estadoActual = GameState.Lose;
+                }
+            }
+        }
+        else if (_estadoActual == GameState.Lose)
+        {
+            // R = Reiniciar carrera - M o Esc = Volver al menu
+            if (keyboardState.IsKeyDown(Keys.R) && _prevKeyboard.IsKeyUp(Keys.R))
+            {
+                ResetGame(volverAlMenu: false);
+            }
+            else if (keyboardState.IsKeyDown(Keys.M) && _prevKeyboard.IsKeyUp(Keys.M))
+            {
+                ResetGame(volverAlMenu: true);
+            }
+        }
+
+        _prevKeyboard = keyboardState;
 
         base.Update(gameTime);
     }
 
-    /// <summary>
-    ///     Se llama cada vez que hay que refrescar la pantalla.
-    ///     Escribir aqui el codigo referido al renderizado.
-    /// </summary>
     protected override void Draw(GameTime gameTime)
     {
-        // Aca deberiamos poner toda la logia de renderizado del juego.
-        GraphicsDevice.Clear(Color.Black);
+        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-        // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
-        _effect.Parameters["View"].SetValue(_view);
-        _effect.Parameters["Projection"].SetValue(_projection);
-        _effect.Parameters["DiffuseColor"].SetValue(Color.DarkBlue.ToVector3());
-
-        foreach (var mesh in _model.Meshes)
+        if (_estadoActual == GameState.Playing)
         {
-            _effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * _world);
-            mesh.Draw();
+            
+            DrawGame(gameTime);
+        }
+        else if (_estadoActual == GameState.Lose)
+        {
+            DrawGame(gameTime);
+            DrawLose();
+        }
+        else if (_estadoActual == GameState.Menu)
+        {
+            DrawMenu();
+        }
+
+        base.Draw(gameTime);
+    }
+
+    private void DrawMenu()
+    {
+        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        GraphicsDevice.BlendState = BlendState.Opaque;
+        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+
+        GraphicsDevice.Clear(new Color(24, 26, 32));
+        Vector3 menuCameraPos = new Vector3(0f, 6f, 18f);
+        Matrix menuView = Matrix.CreateLookAt(menuCameraPos, new Vector3(0f, 1.5f, 0f), Vector3.Up);
+        Matrix menuProj = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(50f), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
+
+        _effect.Parameters["View"]?.SetValue(menuView);
+        _effect.Parameters["Projection"]?.SetValue(menuProj);
+        
+        _effect.Parameters["lightPosition"]?.SetValue(new Vector3(10f, 25f, 15f));
+        _effect.Parameters["lightDiffuseColor"]?.SetValue(new Vector3(1.0f, 0.98f, 0.92f));
+        Atmosphere.Clear(_effect); // sin niebla, nieve ni frio en el menu
+        _effect.Parameters["eyePosition"]?.SetValue(menuCameraPos);
+
+        // Matriz del auto girando
+        Matrix menuCarWorld = Matrix.CreateScale(_currentVehicle.Render.ModelInfo.Scale * 1.5f)
+                            * Matrix.CreateRotationY(_menuCarYaw)
+                            * Matrix.CreateTranslation(Vector3.Zero);
+
+        // Le delegamos el dibujo al vehículo pasándole su matriz del menú
+        _currentVehicle.Render.Draw(_effect, menuView, menuProj, menuCarWorld);
+
+        // Dibujar interfaz de usuario en 2D
+        _spriteBatch.Begin();
+        string titulo = "SELECCIONA TU VEHICULO";
+        //string nombreVehiculo = $"< {_vehiculoActual.Tipo} >";
+        string statsTexto = $"Velocidad/Acel: {_currentVehicle.VehicleStats.Acceleration} | Giro: {_currentVehicle.VehicleStats.TurnSpeed} | Tanque: {_currentVehicle.Fuel.Max}";
+        string ayuda = "[FLECHAS] Cambiar Vehiculo    -    [ENTER] Empezar Carrera";
+
+        _spriteBatch.DrawString(_font, titulo, new Vector2(50, 40), Color.Gold);
+        //_spriteBatch.DrawString(_font, nombreVehiculo, new Vector2(50, 80), Color.White);
+        _spriteBatch.DrawString(_font, statsTexto, new Vector2(50, 120), Color.LightGreen);
+        _spriteBatch.DrawString(_font, ayuda, new Vector2(50, GraphicsDevice.Viewport.Height - 60), Color.LightGray);
+        _spriteBatch.End();
+    }
+
+    private void DrawGame(GameTime gameTime)
+    {
+        #region pass1
+        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        GraphicsDevice.BlendState = BlendState.Opaque;
+        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+
+        GraphicsDevice.SetRenderTarget(_shadowMapRenderTarget);
+        GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.White, 1f, 0);
+
+        _shadowEffect.CurrentTechnique = _shadowEffect.Techniques["DepthPass"];
+
+        // Dibujamos todas las entidades del mundo (autos, ruta, árboles, casas) en el mapa de sombras
+        _world.Draw(_shadowEffect, _lightView, _lightProjection);
+        #endregion
+
+        #region pass2
+        GraphicsDevice.SetRenderTarget(null);//comentar desde aca para ver el shadow map
+        GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, new Color(_atmosphere.Sky), 1f, 0);
+
+        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        GraphicsDevice.BlendState = BlendState.Opaque;
+        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+        GraphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
+
+        Atmosphere.Apply(_effect, _atmosphere, SpawnDistance);
+        _effect.Parameters["Hud"]?.SetValue(false);
+        _effect.Parameters["UseSurfaceBlend"]?.SetValue(0f);
+        _effect.Parameters["View"]?.SetValue(_followCamera.View);
+        _effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
+
+        // Pasamos los parámetros de sombra al BasicShader
+        _effect.Parameters["shadowMap"]?.SetValue(_shadowMapRenderTarget);//shadow map comentar hasta aca
+        _effect.Parameters["shadowMapSize"]?.SetValue(Vector2.One * ShadowmapSize);
+        _effect.Parameters["LightViewProjection"]?.SetValue(_lightView * _lightProjection);
+
+        // Dibujamos el piso y el mundo con sombras
+        DrawCustomFloor();
+        _world.Draw(_effect, _followCamera.View, _followCamera.Projection); //shadow map comentar esto tambien
+
+        // Finalmente el HUD por encima de todo
+        DrawHud();
+        #endregion
+    }
+    private void ResetGame(bool volverAlMenu)
+    {
+        //limpiar el mundo y animaciones
+        _world = new World();
+        _animTime = 0f;
+        _atmosphere = Atmosphere.Preset(SurfaceType.Asphalt);
+
+        Vector3 largadaPos = new Vector3(0f, 0.05f, 0f);
+
+        //recrear RoadSpawner
+        var treesGroup = new DecorationGroup(DecorationType.Tree, 18, [_assets.Decorations.Tree]);
+        var rocksGroup = new DecorationGroup(DecorationType.Rock, 20, _assets.Decorations.Rocks);
+        var houseGroup = new DecorationGroup(DecorationType.House, 100, [_assets.Decorations.House]);
+        var natureRecipes = new List<DecorationGroup> { treesGroup, rocksGroup };
+        var houseRecipes = new List<DecorationGroup> { houseGroup };
+
+        var barrierGroup = new DecorationGroup(DecorationType.Barrier, 0, [_assets.Decorations.Barrier]);
+        var decorationsFactory = new DecorationAreaFactory(natureRecipes, houseRecipes, barrierGroup);
+        var collectibleFactory = new CollectibleFactory(_assets.Collectibles);
+        var roadSpawnerFactory = new RoadSpawnerFactory(_assets.Roads, decorationsFactory, collectibleFactory);
+
+        var spawnerConfig = new RoadSpawnerConfig
+        {
+            StartPosition = largadaPos,
+            SpawnDistance = SpawnDistance,
+            DespawnDistance = DespawnDistance,
+            InitialSegmentCount = 100
+        };
+        _roadSpawner = roadSpawnerFactory.Create(spawnerConfig, _world);
+
+        //cargar el auto seleccionado para restaurar salud, combustible y ruedas
+        var vehiclePresets = new VehiclePresets(_assets.Cars);
+        _currentVehicle.Damageable?.Heal(_currentVehicle.Damageable.Max);
+        _currentVehicle.Fuel?.Refill(_currentVehicle.Fuel.Max);
+        _currentVehicle.Active = true;
+        // Reiniciamos las ruedas si explotaron
+        _currentVehicle.Render.Animator = new CollisionAnimation(_currentVehicle.Render.ModelInfo);
+
+        if (volverAlMenu)
+        {
+            _enCarrera = false;
+            _estadoActual = GameState.Menu;
+            _currentVehicle.Transform.Position = Vector3.Zero;
+            _currentVehicle.Transform.RotationY = 0f;
+            if (MediaPlayer.Queue.ActiveSong != _menuMusic)
+            {
+                MediaPlayer.Play(_menuMusic);
+            }
+        }
+        else
+        {
+            _currentVehicle.Transform.Position = largadaPos;
+            _currentVehicle.Transform.RotationY = MathHelper.ToRadians(180f);
+            _currentVehicle.Transform.Scale = 0.008f;
+
+            _currentVehicle.Speed = 0f;
+            _currentVehicle.Velocity = Vector3.Zero;
+            _currentVehicle.Acceleration = Vector3.Zero;
+
+            _followCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
+            _followCamera.Update(new GameTime(), _currentVehicle.Transform.World);
+
+            _player = new PlayerController(_currentVehicle, _soundEffectLose);
+            _world.Add(_currentVehicle);
+            _traffic = new TrafficController(vehiclePresets, _world, _currentVehicle, _roadSpawner, sfx: _soundEffectHit);
+
+            _enCarrera = true;
+            _estadoActual = GameState.Playing;
+            MediaPlayer.Play(_gameplayMusic);
+        }
+    }
+    private void DrawLose()
+    {
+        int screenWidth = GraphicsDevice.Viewport.Width;
+        int screenHeight = GraphicsDevice.Viewport.Height;
+
+        _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+        _spriteBatch.Draw(DefaultTexture, new Rectangle(0, 0, screenWidth, screenHeight), new Color(0, 0, 0, 180));
+
+        int panelWidth = 500;
+        int panelHeight = 280;
+        int panelX = (screenWidth - panelWidth) / 2;
+        int panelY = (screenHeight - panelHeight) / 2;
+
+        _spriteBatch.Draw(DefaultTexture, new Rectangle(panelX, panelY, panelWidth, panelHeight), new Color(20, 20, 24, 230));
+        _spriteBatch.Draw(DefaultTexture, new Rectangle(panelX, panelY, panelWidth, 4), Color.Crimson); // Borde superior
+
+        string titulo = "DESTRUIDO";
+        Vector2 sizeTitulo = _font.MeasureString(titulo);
+        _spriteBatch.DrawString(_font, titulo, new Vector2(panelX + (panelWidth - sizeTitulo.X) / 2, panelY + 30), Color.Crimson);
+
+        string scoreTexto = $"PUNTAJE: {_player.Score}";
+        Vector2 sizeScore = _font.MeasureString(scoreTexto);
+        _spriteBatch.DrawString(_font, scoreTexto, new Vector2(panelX + (panelWidth - sizeScore.X) / 2, panelY + 95), Color.Gold);
+
+        string opciones = "[R] Reintentar \n[M] Volver al Menu Principal";
+        Vector2 sizeOpciones = _font.MeasureString(opciones);
+        _spriteBatch.DrawString(_font, opciones, new Vector2(panelX + (panelWidth - sizeOpciones.X) / 2, panelY + 170), Color.White);
+
+        _spriteBatch.End();
+    }
+    private void DrawHud()
+    {
+
+        _hudEffect.Parameters["View"]?.SetValue(Matrix.Identity);
+        _hudEffect.Parameters["World"]?.SetValue(Matrix.Identity);
+        _hudEffect.Parameters["Projection"].SetValue(Matrix.Identity);
+
+        GraphicsDevice.DepthStencilState = DepthStencilState.None;
+        GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+        HUD.DrawScore(_hudEffect, GraphicsDevice, _player.Score);
+        HUD.DrawHealth(_hudEffect, GraphicsDevice, _player.CurrentHealth/_player.Vehicle.Damageable.Max);
+        HUD.DrawFuel(_hudEffect, GraphicsDevice, _player.Vehicle.Fuel.Current, _player.Vehicle.Fuel.Max);
+    }
+    //Creamos geometria del piso 
+    //(basicamente un cuadrado con 4 vertices, segun el tamaño que le pasemos, claramente van a ser dos triangulos grandes)
+    private void CreateFloorGeometry(float size)
+    {
+        Vector3 up = Vector3.Up;
+        _floorVertices = new VertexPositionNormalTexture[]
+        {
+            new(new Vector3(-size, 0f, -size), up, new Vector2(0f, 0f)),
+            new(new Vector3(size, 0f, -size),  up, new Vector2(100f, 0f)),
+            new(new Vector3(size, 0f, size),   up, new Vector2(100f, 100f)),
+            new(new Vector3(-size, 0f, size),  up, new Vector2(0f, 100f))
+        };
+        _floorIndices = new short[] { 0, 1, 2, 0, 2, 3 };
+    }
+
+    //Metodo para que dibuje el piso
+    private void DrawCustomFloor()
+    {
+        Matrix floorWorld = Matrix.CreateTranslation(new Vector3(0f, -0.4f, 0f));
+        Matrix invTransposeFloor = Matrix.Transpose(Matrix.Invert(floorWorld));
+        _effect.Parameters["World"]?.SetValue(floorWorld);
+        _effect.Parameters["View"]?.SetValue(_followCamera.View);
+        _effect.Parameters["Projection"]?.SetValue(_followCamera.Projection);
+        _effect.Parameters["InverseTransposeWorld"]?.SetValue(invTransposeFloor);
+        _effect.Parameters["DiffuseColor"]?.SetValue(_atmosphere.Ground); // Color del piso segun la superficie
+        _effect.Parameters["baseTexture"]?.SetValue(DefaultTexture);
+
+        foreach (var pass in _effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            GraphicsDevice.DrawUserIndexedPrimitives(
+                PrimitiveType.TriangleList,
+                _floorVertices, 0, 4,
+                _floorIndices, 0, 2
+            );
         }
     }
 
@@ -154,6 +633,7 @@ public class TGCGame : Game
     protected override void UnloadContent()
     {
         // Libero los recursos.
+        _shadowMapRenderTarget?.Dispose();
         Content.Unload();
 
         base.UnloadContent();
