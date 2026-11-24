@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using TGC.MonoGame.TP.src.Core;
 
@@ -7,60 +7,71 @@ namespace TGC.MonoGame.TP.src.Physics
 {
     internal class CollisionSystem
     {
-        private const float MaxCheckDistance = 100f;
+        private const float MaxCheckDistance = 35f;
+        private const float MaxCheckDistanceSq = MaxCheckDistance * MaxCheckDistance;
 
-        // Narrow phase. 
-        // Take into consideration that Collectibles shouldn't have a Response (null), since their interaction is handled in Collectible System.
+        // Narrow phase
         public void Resolve(Entity a, Entity b)
         {
-            if (a.Collider == null || b.Collider == null) return;
             if (!a.Collider.Shape.Intersects(b.Collider.Shape, a.Transform.World, b.Transform.World)) return;
 
             a.Response?.OnCollision(a, b);
             b.Response?.OnCollision(b, a);
         }
 
-        // Mejorar performance con lo del chat. Resolve All para una misma lista y Resolve Cross para dos. Tomar cercanos.
-        // Otra posible implementacion es que la lista se ordene segun la distancia al jugador aunq solo serviria para un objeto movil.
-        // Todavia no se considera el caso q la entidad sea muy veloz y pueda atravesar a la otra.
         public void ResolveAll(List<Entity> entities)
         {
-            for (int i = 0; i < entities.Count; i++)
+            int count = entities.Count;
+            for (int i = 0; i < count; i++)
             {
-                if (!entities[i].Active) continue;
-                if (entities[i].Collider == null) continue;
-                if (entities[i].Response == null) continue;
+                var a = entities[i];
+                if (!a.Active || a.Collider == null) continue;
+                var posA = a.Transform.Position;
 
-                for (int j = i + 1; j < entities.Count; j++)
+                for (int j = i + 1; j < count; j++)
                 {
-                    if (!entities[j].Active) continue;
-                    if (entities[j].Collider == null) continue;
-                    if (entities[j].Response == null) continue;
+                    var b = entities[j];
+                    if (!b.Active || b.Collider == null) continue;
+                    if (a.Response == null && b.Response == null) continue;
 
-                    var d = Vector3.DistanceSquared(entities[i].Transform.Position, entities[j].Transform.Position);
-                    if (d > MaxCheckDistance * MaxCheckDistance) continue;
+                    var posB = b.Transform.Position;
+                    float dx = posA.X - posB.X;
+                    if (dx > MaxCheckDistance || dx < -MaxCheckDistance) continue;
 
-                    Resolve(entities[i], entities[j]);
+                    float dz = posA.Z - posB.Z;
+                    if (dz > MaxCheckDistance || dz < -MaxCheckDistance) continue;
+                    if (dx * dx + dz * dz > MaxCheckDistanceSq) continue;
+                    
+                    Resolve(a, b);
                 }
             }
         }
 
-        public void ResolveCross(IEnumerable<Entity> entitiesA, IEnumerable<Entity> entitiesB)
+        public void ResolveCross(List<Entity> entitiesA, List<Entity> entitiesB)
         {
-            foreach (var a in entitiesA)
+            int countA = entitiesA.Count;
+            int countB = entitiesB.Count;
+
+            for (int i = 0; i < countA; i++)
             {
-                if (!a.Active) continue;
-                if (a.Collider == null) continue;
-                if (a.Response == null) continue;
+                var a = entitiesA[i];
+                if (!a.Active || a.Collider == null) continue;
 
-                foreach (var b in entitiesB)
+                var posA = a.Transform.Position;
+
+                for (int j = 0; j < countB; j++)
                 {
-                    if (!b.Active) continue;
-                    if (b.Collider == null) continue;
-                    if (b.Response == null) continue;
+                    var b = entitiesB[j];
+                    if (!b.Active || b.Collider == null) continue;
+                    if (a.Response == null && b.Response == null) continue;
 
-                    var d = Vector3.DistanceSquared(a.Transform.Position, b.Transform.Position);
-                    if (d > MaxCheckDistance * MaxCheckDistance) continue;
+                    var posB = b.Transform.Position;
+                    float dx = posA.X - posB.X;
+                    if (dx > MaxCheckDistance || dx < -MaxCheckDistance) continue;
+
+                    float dz = posA.Z - posB.Z;
+                    if (dz > MaxCheckDistance || dz < -MaxCheckDistance) continue;
+                    if (dx * dx + dz * dz > MaxCheckDistanceSq) continue;
 
                     Resolve(a, b);
                 }
