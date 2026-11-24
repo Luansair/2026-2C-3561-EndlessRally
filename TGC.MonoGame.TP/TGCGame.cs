@@ -97,8 +97,9 @@ public class TGCGame : Game
         // Maneja la configuracion y la administracion del dispositivo grafico.
         _graphics = new GraphicsDeviceManager(this);
 
-        _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
-        _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
+        _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+        _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+        _graphics.IsFullScreen = true;
 
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
