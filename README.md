@@ -24,9 +24,9 @@ Teclas: A,D para girar - S freno
 
 ## Integrantes
 
-TGC, Tgcito  |  Apellido, Nombre
+Diaz Frutos, Gonzalo  |  Calbi, Matteo | Rodriguez, Ariel
 ------------ | -------------
-| <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/main/images/robotgc.png" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/main/images/trofeotp.png" height="500"> |
+| <img src="https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/int%201.png" height="500"> | <img src="https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/int%202.jp)" height="500"> | <img src="https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/int.png" height="500">
 
 ## Capturas
 
@@ -36,4 +36,4 @@ TGC, Tgcito  |  Apellido, Nombre
 
 ## Game Play
 
-[![Watch the video](https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/cap%201.png))](https://drive.google.com/file/d/1qWIY8ubnSupleZcciahsFC0S_67yd8_Y/view?usp=drive_link)
+[![Watch the video](https://github.com/Luansair/2026-2C-3561-EndlessRally/blob/Refactor-pruebas/TGC.MonoGame.TP/capturas/cap%201.png)](https://drive.google.com/file/d/1qWIY8ubnSupleZcciahsFC0S_67yd8_Y/view?usp=drive_link)
